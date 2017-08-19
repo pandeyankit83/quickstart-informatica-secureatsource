@@ -1,6 +1,6 @@
 {
     "AWSTemplateFormatVersion": "2010-09-09",
-    "Description": "This template creates a VPC infrastructure with a deployment of Informatica Enterprise Information Catalog. It will deploy a bastion and managed NAT gateways or NAT instances into the public subnet for each Availability Zone. **WARNING** This template creates Amazon EC2 instance and related resources. You will be billed for the AWS resources used if you create a stack from this template.",
+    "Description": "This template creates a VPC infrastructure with a deployment of Informatica Secure@Source. It will deploy a bastion and managed NAT gateways or NAT instances into the public subnet for each Availability Zone. **WARNING** This template creates Amazon EC2 instance and related resources. You will be billed for the AWS resources used if you create a stack from this template.",
     "Metadata": {
         "AWS::CloudFormation::Interface": {
             "ParameterGroups": [
@@ -39,7 +39,7 @@
                 },
                 {
                     "Label": {
-                        "default": "Informatica Enterprise Information Catalog Configuration"
+                        "default": "Informatica Secure@Source Configuration"
                     },
                     "Parameters": [
                         "InformaticaAdminUsername",
@@ -79,10 +79,10 @@
                     "default": "Informatica Administrator Username"
                 },
                 "InformaticaEICKeyName": {
-                    "default": "Enterprise Information Catalog License Key Name"
+                    "default": "Secure@Source License Key Name"
                 },
                 "InformaticaEICKeyS3Bucket": {
-                    "default": "Enterprise Information Catalog License Key Location"
+                    "default": "Secure@Source License Key Location"
                 },
                 "ImportSampleData": {
                     "default": "Import Sample Content"
@@ -159,11 +159,11 @@
         },
         "InformaticaEICKeyName": {
             "Type": "String",
-            "Description": "The Informatica Enterprise Information Catalog license key name. For example, <license key name> or <bucket sub folder/license key name>"
+            "Description": "The Informatica Secure@Source license key name. For example, <license key name> or <bucket sub folder/license key name>"
         },
         "InformaticaEICKeyS3Bucket": {
             "Type": "String",
-            "Description": "Name of the Amazon S3 bucket in your account that contains the Informatica Enterprise Information Catalog Key"
+            "Description": "Name of the Amazon S3 bucket in your account that contains the Informatica Secure@Source Key"
         },
         "InformaticaServerInstanceType": {
             "Type": "String",
@@ -225,7 +225,7 @@
         "QSS3KeyPrefix": {
             "AllowedPattern": "^[0-9a-zA-Z-]+(/[0-9a-zA-Z-]+)*$",
             "ConstraintDescription": "Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/). It cannot start or end with forward slash (/) because they are automatically appended.",
-            "Default": "informatica/eic/latest",
+            "Default": "informatica/secureatsource/latest",
             "Description": "S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/). It cannot start or end with forward slash (/) because they are automatically appended.",
             "Type": "String"
         },
@@ -245,93 +245,12 @@
             "Type": "String"
         }
     },
-    "Mappings": {
-        "AWSInfoRegionMap": {
-            "ap-northeast-1": {
-                "Partition": "aws",
-                "QuickStartS3URL": "https://s3.amazonaws.com"
-            },
-            "ap-northeast-2": {
-                "Partition": "aws",
-                "QuickStartS3URL": "https://s3.amazonaws.com"
-            },
-            "ap-south-1": {
-                "Partition": "aws",
-                "QuickStartS3URL": "https://s3.amazonaws.com"
-            },
-            "ap-southeast-1": {
-                "Partition": "aws",
-                "QuickStartS3URL": "https://s3.amazonaws.com"
-            },
-            "ap-southeast-2": {
-                "Partition": "aws",
-                "QuickStartS3URL": "https://s3.amazonaws.com"
-            },
-            "ca-central-1": {
-                "Partition": "aws",
-                "QuickStartS3URL": "https://s3.amazonaws.com"
-            },
-            "eu-central-1": {
-                "Partition": "aws",
-                "QuickStartS3URL": "https://s3.amazonaws.com"
-            },
-            "eu-west-1": {
-                "Partition": "aws",
-                "QuickStartS3URL": "https://s3.amazonaws.com"
-            },
-            "eu-west-2": {
-                "Partition": "aws",
-                "QuickStartS3URL": "https://s3.amazonaws.com"
-            },
-            "sa-east-1": {
-                "Partition": "aws",
-                "QuickStartS3URL": "https://s3.amazonaws.com"
-            },
-            "us-east-1": {
-                "Partition": "aws",
-                "QuickStartS3URL": "https://s3.amazonaws.com"
-            },
-            "us-east-2": {
-                "Partition": "aws",
-                "QuickStartS3URL": "https://s3.amazonaws.com"
-            },
-            "us-west-1": {
-                "Partition": "aws",
-                "QuickStartS3URL": "https://s3.amazonaws.com"
-            },
-            "us-west-2": {
-                "Partition": "aws",
-                "QuickStartS3URL": "https://s3.amazonaws.com"
-            }
-        }
-    },
     "Resources": {
         "VPCStack": {
             "Type": "AWS::CloudFormation::Stack",
             "Properties": {
                 "TemplateURL": {
-                    "Fn::Join": [
-                        "/",
-                        [
-                            {
-                                "Fn::FindInMap": [
-                                    "AWSInfoRegionMap",
-                                    {
-                                        "Ref": "AWS::Region"
-                                    },
-                                    "QuickStartS3URL"
-                                ]
-                            },
-                            {
-                                "Ref": "QSS3BucketName"
-                            },
-                            {
-                                "Ref": "QSS3KeyPrefix"
-                            },
-                            "submodules/quickstart-aws-vpc",
-                            "templates/aws-vpc.template"
-                        ]
-                    ]
+                    "Fn::Sub": "https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}/submodules/quickstart-aws-vpc/templates/aws-vpc.template"
                 },
                 "Parameters": {
                     "AvailabilityZones": {
@@ -369,27 +288,7 @@
             "Type": "AWS::CloudFormation::Stack",
             "Properties": {
                 "TemplateURL": {
-                    "Fn::Join": [
-                        "/",
-                        [
-                            {
-                                "Fn::FindInMap": [
-                                    "AWSInfoRegionMap",
-                                    {
-                                        "Ref": "AWS::Region"
-                                    },
-                                    "QuickStartS3URL"
-                                ]
-                            },
-                            {
-                                "Ref": "QSS3BucketName"
-                            },
-                            {
-                                "Ref": "QSS3KeyPrefix"
-                            },
-                            "templates/informatica-secureatsource.template"
-                        ]
-                    ]
+                    "Fn::Sub": "https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}/templates/informatica-secureatsource.template"
                 },
                 "Parameters": {
                     "DBUser": {
