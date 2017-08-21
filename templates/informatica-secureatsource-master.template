@@ -283,7 +283,7 @@
                 }
             }
         },
-        "EICStack": {
+        "SATSStack": {
             "DependsOn": "VPCStack",
             "Type": "AWS::CloudFormation::Stack",
             "Properties": {
