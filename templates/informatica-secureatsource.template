@@ -423,7 +423,6 @@
                     "",
                     [
                       "#!/bin/bash\n",
-                      "set -x\n",
                       "publicDnsName=$(curl http://169.254.169.254/latest/meta-data/public-hostname) \n",
                       "hostname $publicDnsName \n",
                       "sudo su -c \"sed --in-place '1s/.*/$publicDnsName/' /etc/hostname\" \n",
@@ -444,7 +443,6 @@
                     "",
                     [
                       "#!/bin/bash \n",
-                      "set -x\n",
                       "ln -s /usr/jdk64/jdk1.8.0_60/bin/java /etc/alternatives/java &> /dev/null\n",
                       "ln -s /etc/alternatives/java /usr/bin/java &> /dev/null\n"
                     ]
@@ -502,7 +500,6 @@
               "",
               [
                 "#!/bin/bash\n",
-                "set -x\n",
                 "sudo yum update -y aws-cfn-bootstrap\n",
                 "# Install the files and packages from the metadata\n",
                 "/opt/aws/bin/cfn-init -v ",
@@ -554,7 +551,6 @@
                     "",
                     [
                       "#!/bin/bash\n",
-                      "set -x\n",
                       "publicDnsName=$(curl http://169.254.169.254/latest/meta-data/public-hostname) \n",
                       "hostname $publicDnsName \n",
                       "sudo su -c \"sed --in-place '1s/.*/$publicDnsName/' /etc/hostname\" \n",
@@ -967,7 +963,6 @@
                     "",
                     [
                       "#!/bin/bash\n",
-                      "set -x\n",
                       "publicDnsName=$(curl http://169.254.169.254/latest/meta-data/public-hostname) \n",
                       "hostname $publicDnsName \n",
                       "sudo su -c \"sed --in-place '1s/.*/$publicDnsName/' /etc/hostname\" \n",
@@ -988,7 +983,6 @@
                     "",
                     [
                       "#!/bin/bash \n",
-                      "set -x\n",
                       "ln -s /usr/jdk64/jdk1.8.0_60/bin/java /etc/alternatives/java &> /dev/null\n",
                       "ln -s /etc/alternatives/java /usr/bin/java &> /dev/null\n"
                     ]
@@ -1111,7 +1105,6 @@
                     "",
                     [
                       "#!/bin/bash\n",
-                      "set -x\n",
                       "publicDnsName=$(curl http://169.254.169.254/latest/meta-data/public-hostname) \n",
                       "hostname $publicDnsName \n",
                       "sudo su -c \"sed --in-place '1s/.*/$publicDnsName/' /etc/hostname\" \n",
@@ -1254,7 +1247,6 @@
                     "",
                     [
                       "#!/bin/bash\n",
-                      "set -x\n",
                       "publicDnsName=$(curl http://169.254.169.254/latest/meta-data/public-hostname) \n",
                       "hostname $publicDnsName \n",
                       "sudo su -c \"sed --in-place '1s/.*/$publicDnsName/' /etc/hostname\" \n",
@@ -1891,7 +1883,6 @@
                     "",
                     [
                       "#!/bin/bash\n",
-                      "set -x\n",
                       "privateIp=$(curl http://169.254.169.254/latest/meta-data/local-ipv4) \n",
                       "publicDnsName=$(curl http://169.254.169.254/latest/meta-data/public-hostname) \n",
                       "hostname $publicDnsName \n",
@@ -2241,7 +2232,6 @@
                     "",
                     [
                       "#!/bin/bash\n",
-                      "set -x\n",
                       "THISHOST=$(hostname -f)\n",
                       "sed -i -e ",
                       {
@@ -2465,7 +2455,6 @@
                     "",
                     [
                       "#!/bin/bash\n",
-                      "set -x\n",
                       "administratorName=",
                       {
                         "Ref": "InformaticaAdminUsername"
@@ -2532,7 +2521,6 @@
                     "",
                     [
                       "#!/bin/bash\n",
-                      "set -x\n",
                       "administratorName=",
                       {
                         "Ref": "InformaticaAdminUsername"
