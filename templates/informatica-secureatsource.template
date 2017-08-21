@@ -10,11 +10,11 @@
       "Description": "ID of your existing VPC where you want to deploy Secure@Source",
       "Type": "AWS::EC2::VPC::Id"
     },
-    "InformaticaEICKeyS3Bucket": {
+    "InformaticaSATSKeyS3Bucket": {
       "Type": "String",
       "Description": "Name of the Amazon S3 bucket in your account that contains the Informatica Secure@Source Key"
     },
-    "InformaticaEICKeyName": {
+    "InformaticaSATSKeyName": {
       "Type": "String",
       "Description": "The Informatica Secure@Source license key name. For example, <license key name> or <bucket sub folder/license key name>"
     },
@@ -77,7 +77,7 @@
     "QSS3KeyPrefix": {
         "AllowedPattern": "^[0-9a-zA-Z-]+(/[0-9a-zA-Z-]+)*$",
         "ConstraintDescription": "Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/). It cannot start or end with forward slash (/) because they are automatically appended.",
-        "Default": "informatica/eic/latest",
+        "Default": "informatica/sats/latest",
         "Description": "S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/). It cannot start or end with forward slash (/) because they are automatically appended.",
         "Type": "String"
     },
@@ -205,8 +205,8 @@
           "Parameters": [
             "InformaticaAdminUsername",
             "InformaticaAdminPassword",
-            "InformaticaEICKeyS3Bucket",
-            "InformaticaEICKeyName",
+            "InformaticaSATSKeyS3Bucket",
+            "InformaticaSATSKeyName",
             "ImportSampleData"
           ]
         }
@@ -224,10 +224,10 @@
         "InformaticaAdminPassword": {
           "default": "Informatica Administrator Password"
         },
-        "InformaticaEICKeyS3Bucket": {
+        "InformaticaSATSKeyS3Bucket": {
           "default": "Secure@Source License Key Location"
         },
-        "InformaticaEICKeyName": {
+        "InformaticaSATSKeyName": {
           "default": "Secure@Source License Key Name"
         },
         "InformaticaServerSubnetID": {
@@ -260,56 +260,56 @@
   "Mappings": {
     "AWSAMIRegionMap": {
       "AMI": {
-        "INFAEICADMINHVM": "Informatica EIC & SecureAtSource Administration Image",
-        "INFAEICCLUSTERHVM": "Informatica EIC & SecureAtSource Cluster Image"
+        "INFASATSADMINHVM": "Informatica EIC & SecureAtSource Administration Image",
+        "INFASATSCLUSTERHVM": "Informatica EIC & SecureAtSource Cluster Image"
       },
       "us-east-1": {
-        "INFAEICADMINHVM": "ami-b8102bc3",
-        "INFAEICCLUSTERHVM": "ami-eb122990"
+        "INFASATSADMINHVM": "ami-b8102bc3",
+        "INFASATSCLUSTERHVM": "ami-eb122990"
       },
       "us-east-2": {
-        "INFAEICADMINHVM": "ami-622b0807",
-        "INFAEICCLUSTERHVM": "ami-1c2b0879"
+        "INFASATSADMINHVM": "ami-622b0807",
+        "INFASATSCLUSTERHVM": "ami-1c2b0879"
       },
       "us-west-1": {
-        "INFAEICADMINHVM": "ami-9d7d48fd",
-        "INFAEICCLUSTERHVM": "ami-d77346b7"
+        "INFASATSADMINHVM": "ami-9d7d48fd",
+        "INFASATSCLUSTERHVM": "ami-d77346b7"
       },
       "us-west-2": {
-        "INFAEICADMINHVM": "ami-1b30df63",
-        "INFAEICCLUSTERHVM": "ami-fe0ee186"
+        "INFASATSADMINHVM": "ami-1b30df63",
+        "INFASATSCLUSTERHVM": "ami-fe0ee186"
       },
       "ap-south-1": {
-        "INFAEICADMINHVM": "ami-0b581d64",
-        "INFAEICCLUSTERHVM": "ami-91591cfe"
+        "INFASATSADMINHVM": "ami-0b581d64",
+        "INFASATSCLUSTERHVM": "ami-91591cfe"
       },
       "ap-northeast-1": {
-        "INFAEICADMINHVM": "ami-f4cc3e92",
-        "INFAEICCLUSTERHVM": "ami-6032c006"
+        "INFASATSADMINHVM": "ami-f4cc3e92",
+        "INFASATSCLUSTERHVM": "ami-6032c006"
       },
       "ap-northeast-2": {
-        "INFAEICADMINHVM": "ami-f5c51d9b",
-        "INFAEICCLUSTERHVM": "ami-5ac71f34"
+        "INFASATSADMINHVM": "ami-f5c51d9b",
+        "INFASATSCLUSTERHVM": "ami-5ac71f34"
       },
       "ap-southeast-1": {
-        "INFAEICADMINHVM": "ami-253a5c46",
-        "INFAEICCLUSTERHVM": "ami-aa3d5bc9"
+        "INFASATSADMINHVM": "ami-253a5c46",
+        "INFASATSCLUSTERHVM": "ami-aa3d5bc9"
       },
       "ap-southeast-2": {
-        "INFAEICADMINHVM": "ami-f5c51d9b",
-        "INFAEICCLUSTERHVM": "ami-5ac71f34"
+        "INFASATSADMINHVM": "ami-f5c51d9b",
+        "INFASATSCLUSTERHVM": "ami-5ac71f34"
       },
       "sa-east-1": {
-        "INFAEICADMINHVM": "ami-24007048",
-        "INFAEICCLUSTERHVM": "ami-4702722b"
+        "INFASATSADMINHVM": "ami-24007048",
+        "INFASATSCLUSTERHVM": "ami-4702722b"
       },
       "eu-west-1": {
-        "INFAEICADMINHVM": "ami-b7817ece",
-        "INFAEICCLUSTERHVM": "ami-b6817ecf"
+        "INFASATSADMINHVM": "ami-b7817ece",
+        "INFASATSCLUSTERHVM": "ami-b6817ecf"
       },
       "eu-central-1": {
-        "INFAEICADMINHVM": "ami-f8e74c97",
-        "INFAEICCLUSTERHVM": "ami-f6e74c99"
+        "INFASATSADMINHVM": "ami-f8e74c97",
+        "INFASATSCLUSTERHVM": "ami-f6e74c99"
       }
     },
     "ClusterSizeMapping": {
@@ -470,7 +470,7 @@
             {
               "Ref": "AWS::Region"
             },
-            "INFAEICCLUSTERHVM"
+            "INFASATSCLUSTERHVM"
           ]
         },
         "InstanceType": {
@@ -598,7 +598,7 @@
             {
               "Ref": "AWS::Region"
             },
-            "INFAEICCLUSTERHVM"
+            "INFASATSCLUSTERHVM"
           ]
         },
         "InstanceType": {
@@ -726,7 +726,7 @@
             {
               "Ref": "AWS::Region"
             },
-            "INFAEICCLUSTERHVM"
+            "INFASATSCLUSTERHVM"
           ]
         },
         "InstanceType": {
@@ -868,7 +868,7 @@
             {
               "Ref": "AWS::Region"
             },
-            "INFAEICCLUSTERHVM"
+            "INFASATSCLUSTERHVM"
           ]
         },
         "InstanceType": {
@@ -1010,7 +1010,7 @@
             {
               "Ref": "AWS::Region"
             },
-            "INFAEICCLUSTERHVM"
+            "INFASATSCLUSTERHVM"
           ]
         },
         "InstanceType": {
@@ -1152,7 +1152,7 @@
             {
               "Ref": "AWS::Region"
             },
-            "INFAEICCLUSTERHVM"
+            "INFASATSCLUSTERHVM"
           ]
         },
         "InstanceType": {
@@ -1294,7 +1294,7 @@
             {
               "Ref": "AWS::Region"
             },
-            "INFAEICCLUSTERHVM"
+            "INFASATSCLUSTERHVM"
           ]
         },
         "InstanceType": {
@@ -1786,11 +1786,11 @@
                     [
                       "arn:aws:s3:::",
                       {
-                        "Ref": "InformaticaEICKeyS3Bucket"
+                        "Ref": "InformaticaSATSKeyS3Bucket"
                       },
                       "/",
                       {
-                        "Ref": "InformaticaEICKeyName"
+                        "Ref": "InformaticaSATSKeyName"
                       }
                     ]
                   ]
@@ -1863,7 +1863,7 @@
             },
             "buckets": [
               {
-                "Ref": "InformaticaEICKeyS3Bucket"
+                "Ref": "InformaticaSATSKeyS3Bucket"
               }
             ]
           }
@@ -2589,11 +2589,11 @@
                     [
                       "https://",
                       {
-                        "Ref": "InformaticaEICKeyS3Bucket"
+                        "Ref": "InformaticaSATSKeyS3Bucket"
                       },
                       ".s3.amazonaws.com/",
                       {
-                        "Ref": "InformaticaEICKeyName"
+                        "Ref": "InformaticaSATSKeyName"
                       }
                     ]
                   ]
@@ -2669,7 +2669,7 @@
             {
               "Ref": "AWS::Region"
             },
-            "INFAEICADMINHVM"
+            "INFASATSADMINHVM"
           ]
         },
         "InstanceType": {

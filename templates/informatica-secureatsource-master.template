@@ -44,8 +44,8 @@
                     "Parameters": [
                         "InformaticaAdminUsername",
                         "InformaticaAdminPassword",
-                        "InformaticaEICKeyS3Bucket",
-                        "InformaticaEICKeyName",
+                        "InformaticaSATSKeyS3Bucket",
+                        "InformaticaSATSKeyName",
                         "ImportSampleData"
                     ]
                 },
@@ -78,10 +78,10 @@
                 "InformaticaAdminUsername": {
                     "default": "Informatica Administrator Username"
                 },
-                "InformaticaEICKeyName": {
+                "InformaticaSATSKeyName": {
                     "default": "Secure@Source License Key Name"
                 },
-                "InformaticaEICKeyS3Bucket": {
+                "InformaticaSATSKeyS3Bucket": {
                     "default": "Secure@Source License Key Location"
                 },
                 "ImportSampleData": {
@@ -157,11 +157,11 @@
             "Description": "Username to access Informatica Administrator",
             "Type": "String"
         },
-        "InformaticaEICKeyName": {
+        "InformaticaSATSKeyName": {
             "Type": "String",
             "Description": "The Informatica Secure@Source license key name. For example, <license key name> or <bucket sub folder/license key name>"
         },
-        "InformaticaEICKeyS3Bucket": {
+        "InformaticaSATSKeyS3Bucket": {
             "Type": "String",
             "Description": "Name of the Amazon S3 bucket in your account that contains the Informatica Secure@Source Key"
         },
