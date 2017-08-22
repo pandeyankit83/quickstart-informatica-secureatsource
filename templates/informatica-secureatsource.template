@@ -1,0 +1,2845 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Informatica Secure@Source. This template creates Amazon EC2 instances, Elastic IPs and related resources. You will be billed for the AWS resources used if you create a stack from this template.",
+  "Parameters": {
+    "KeyName": {
+      "Description": "Name of an existing Amazon EC2 keypair. You must specify this option to enable SSH access to Informatica domain and cluster instances",
+      "Type": "AWS::EC2::KeyPair::KeyName"
+    },
+    "VPCID": {
+      "Description": "ID of your existing VPC where you want to deploy Secure@Source",
+      "Type": "AWS::EC2::VPC::Id"
+    },
+    "InformaticaSATSKeyS3Bucket": {
+      "Type": "String",
+      "Description": "Name of the Amazon S3 bucket in your account that contains the Informatica Secure@Source Key"
+    },
+    "InformaticaSATSKeyName": {
+      "Type": "String",
+      "Description": "The Informatica Secure@Source license key name. For example, <license key name> or <bucket sub folder/license key name>"
+    },
+    "InformaticaAdminUsername": {
+      "Description": "Username to access Informatica Administrator",
+      "Type": "String"
+    },
+    "InformaticaAdminPassword": {
+      "Description": "Password to access Informatica Administrator",
+      "Type": "String",
+      "NoEcho": "True"
+    },
+    "InformaticaServerSubnetID": {
+      "Description": "Select a publicly accessible subnet ID for the Informatica domain",
+      "Type": "AWS::EC2::Subnet::Id"
+    },
+    "InformaticaServerInstanceType": {
+      "Type": "String",
+      "Default": "c4.4xlarge",
+      "AllowedValues": [
+        "c4.4xlarge",
+        "c4.8xlarge"
+      ],
+      "Description": "The EC2 instance type for the instance that hosts the Informatica domain. Default is c4.4xlarge"
+    },
+    "DBUser": {
+      "Description": "Username for the database instance associated with Informatica domain and services (such as Model Repository Service, Data Integration Service, Content Management Service)",
+      "Type": "String",
+      "MinLength": "8",
+      "MaxLength": "18"
+    },
+    "DBPassword": {
+      "Description": "Password for the database instance associated with Informatica domain and services (such as Model Repository Service, Data Integration Service, Content Management Service)",
+      "Type": "String",
+      "NoEcho": "True",
+      "MinLength": "8",
+      "MaxLength": "18"
+    },
+    "DBSubnetIDs": {
+      "Description": "IDs of two private subnets in the selected VPC. These must be in different Availability Zones in the selected VPC",
+      "Type": "List<AWS::EC2::Subnet::Id>"
+    },
+    "ICSClusterSize": {
+      "Type": "String",
+      "Default": "Small",
+      "AllowedValues": [
+        "Small",
+        "Medium",
+        "Large"
+      ],
+      "Description": "The cluster size (i.) Small (c4.8xlarge, single node) (ii.) Medium (c4.8xlarge, three nodes) (iii.)  Large (c4.8xlarge, six nodes)"
+    },
+    "QSS3BucketName": {
+        "AllowedPattern": "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$",
+        "ConstraintDescription": "Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-).",
+        "Default": "quickstart-reference",
+        "Description": "S3 bucket name for the Quick Start assets. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-).",
+        "Type": "String"
+    },
+    "QSS3KeyPrefix": {
+        "AllowedPattern": "^[0-9a-zA-Z-]+(/[0-9a-zA-Z-]+)*$",
+        "ConstraintDescription": "Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/). It cannot start or end with forward slash (/) because they are automatically appended.",
+        "Default": "informatica/sats/latest",
+        "Description": "S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/). It cannot start or end with forward slash (/) because they are automatically appended.",
+        "Type": "String"
+    },
+    "IPAddressRange": {
+      "Description": "The CIDR IP range that is permitted to access the Informatica domain and the Informatica embedded cluster",
+      "Type": "String",
+      "MinLength": "9",
+      "MaxLength": "18",
+      "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
+      "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
+    },
+    "ImportSampleData": {
+      "Type": "String",
+      "Default": "Yes",
+      "AllowedValues": [
+        "Yes",
+        "No"
+      ],
+      "Description": "Select Yes to import the sample catalog data. You can use the sample data to get started with the product"
+    }
+  },
+  "Conditions": {
+    "SingleNodeCnd": {
+      "Fn::Equals": [
+        {
+          "Ref": "ICSClusterSize"
+        },
+        "Small"
+      ]
+    },
+    "CreateMediumClusterCnd": {
+      "Fn::Equals": [
+        {
+          "Ref": "ICSClusterSize"
+        },
+        "Medium"
+      ]
+    },
+    "CreateLargeClusterCnd": {
+      "Fn::Equals": [
+        {
+          "Ref": "ICSClusterSize"
+        },
+        "Large"
+      ]
+    },
+    "MultipleNodeCnd": {
+      "Fn::Or": [
+        {
+          "Condition": "CreateMediumClusterCnd"
+        },
+        {
+          "Condition": "CreateLargeClusterCnd"
+        }
+      ]
+    },
+    "ImportSampleCnd": {
+      "Fn::Equals": [
+        {
+          "Ref": "ImportSampleData"
+        },
+        "Yes"
+      ]
+    },
+    "SupportMultiAZCnd": {
+      "Fn::Equals": [
+        {
+          "Fn::FindInMap": [
+            "MultiAZRegionMapping",
+            {
+              "Ref": "AWS::Region"
+            },
+            "Supporting"
+          ]
+        },
+        "YES"
+      ]
+    },
+    "DoNotSupportDbM4Class": {
+      "Fn::Equals": [
+        {
+          "Ref": "AWS::Region"
+        },
+        "sa-east-1"
+      ]
+    }
+  },
+  "Metadata": {
+    "AWS::CloudFormation::Interface": {
+      "ParameterGroups": [
+        {
+          "Label": {
+            "default": "Network Configuration"
+          },
+          "Parameters": [
+            "VPCID",
+            "InformaticaServerSubnetID",
+            "DBSubnetIDs",
+            "IPAddressRange"
+          ]
+        },
+        {
+          "Label": {
+            "default": "Amazon EC2 Configuration"
+          },
+          "Parameters": [
+            "KeyName",
+            "InformaticaServerInstanceType",
+            "ICSClusterSize"
+          ]
+        },
+        {
+          "Label": {
+            "default": "Amazon RDS Configuration"
+          },
+          "Parameters": [
+            "DBUser",
+            "DBPassword"
+          ]
+        },
+        {
+          "Label": {
+            "default": "Informatica Secure@Source Configuration"
+          },
+          "Parameters": [
+            "InformaticaAdminUsername",
+            "InformaticaAdminPassword",
+            "InformaticaSATSKeyS3Bucket",
+            "InformaticaSATSKeyName",
+            "ImportSampleData"
+          ]
+        }
+      ],
+      "ParameterLabels": {
+        "VPCID": {
+          "default": "VPC"
+        },
+        "InformaticaServerInstanceType": {
+          "default": "Informatica Domain Instance Type"
+        },
+        "InformaticaAdminUsername": {
+          "default": "Informatica Administrator Username"
+        },
+        "InformaticaAdminPassword": {
+          "default": "Informatica Administrator Password"
+        },
+        "InformaticaSATSKeyS3Bucket": {
+          "default": "Secure@Source License Key Location"
+        },
+        "InformaticaSATSKeyName": {
+          "default": "Secure@Source License Key Name"
+        },
+        "InformaticaServerSubnetID": {
+          "default": "Informatica Domain Subnet"
+        },
+        "DBUser": {
+          "default": "Informatica Database Instance Username"
+        },
+        "DBPassword": {
+          "default": "Informatica Database Instance Password"
+        },
+        "DBSubnetIDs": {
+          "default": "Informatica Database Subnets"
+        },
+        "ICSClusterSize": {
+          "default": "Informatica Embedded Cluster Size"
+        },
+        "ImportSampleData": {
+          "default": "Import Sample Content"
+        },
+        "IPAddressRange": {
+          "default": "IP Address Range"
+        },
+        "KeyName": {
+          "default": "Key Pair Name"
+        }
+      }
+    }
+  },
+  "Mappings": {
+    "AWSAMIRegionMap": {
+      "AMI": {
+        "INFASATSADMINHVM": "Informatica EIC & SecureAtSource Administration Image",
+        "INFASATSCLUSTERHVM": "Informatica EIC & SecureAtSource Cluster Image"
+      },
+      "us-east-1": {
+        "INFASATSADMINHVM": "ami-b8102bc3",
+        "INFASATSCLUSTERHVM": "ami-eb122990"
+      },
+      "us-east-2": {
+        "INFASATSADMINHVM": "ami-622b0807",
+        "INFASATSCLUSTERHVM": "ami-1c2b0879"
+      },
+      "us-west-1": {
+        "INFASATSADMINHVM": "ami-9d7d48fd",
+        "INFASATSCLUSTERHVM": "ami-d77346b7"
+      },
+      "us-west-2": {
+        "INFASATSADMINHVM": "ami-1b30df63",
+        "INFASATSCLUSTERHVM": "ami-fe0ee186"
+      },
+      "ap-south-1": {
+        "INFASATSADMINHVM": "ami-0b581d64",
+        "INFASATSCLUSTERHVM": "ami-91591cfe"
+      },
+      "ap-northeast-1": {
+        "INFASATSADMINHVM": "ami-f4cc3e92",
+        "INFASATSCLUSTERHVM": "ami-6032c006"
+      },
+      "ap-northeast-2": {
+        "INFASATSADMINHVM": "ami-f5c51d9b",
+        "INFASATSCLUSTERHVM": "ami-5ac71f34"
+      },
+      "ap-southeast-1": {
+        "INFASATSADMINHVM": "ami-253a5c46",
+        "INFASATSCLUSTERHVM": "ami-aa3d5bc9"
+      },
+      "ap-southeast-2": {
+        "INFASATSADMINHVM": "ami-f5c51d9b",
+        "INFASATSCLUSTERHVM": "ami-5ac71f34"
+      },
+      "sa-east-1": {
+        "INFASATSADMINHVM": "ami-24007048",
+        "INFASATSCLUSTERHVM": "ami-4702722b"
+      },
+      "eu-west-1": {
+        "INFASATSADMINHVM": "ami-b7817ece",
+        "INFASATSCLUSTERHVM": "ami-b6817ecf"
+      },
+      "eu-central-1": {
+        "INFASATSADMINHVM": "ami-f8e74c97",
+        "INFASATSCLUSTERHVM": "ami-f6e74c99"
+      }
+    },
+    "ClusterSizeMapping": {
+      "Small": {
+        "InstanceType": "c4.8xlarge"
+      },
+      "Medium": {
+        "InstanceType": "c4.8xlarge"
+      },
+      "Large": {
+        "InstanceType": "c4.8xlarge"
+      }
+    },
+    "MultiAZRegionMapping": {
+      "us-east-1": {
+        "Supporting": "YES"
+      },
+      "us-east-2": {
+        "Supporting": "YES"
+      },
+      "us-west-1": {
+        "Supporting": "NO"
+      },
+      "us-west-2": {
+        "Supporting": "YES"
+      },
+      "ap-south-1": {
+        "Supporting": "YES"
+      },
+      "ap-northeast-1": {
+        "Supporting": "YES"
+      },
+      "ap-northeast-2": {
+        "Supporting": "YES"
+      },
+      "ap-southeast-1": {
+        "Supporting": "NO"
+      },
+      "ap-southeast-2": {
+        "Supporting": "YES"
+      },
+      "sa-east-1": {
+        "Supporting": "YES"
+      },
+      "eu-west-1": {
+        "Supporting": "YES"
+      },
+      "eu-central-1": {
+        "Supporting": "NO"
+      }
+    }
+  },
+  "Resources": {
+    "ElasticIpNode1": {
+      "Type": "AWS::EC2::EIP",
+      "Properties": {
+        "Domain": "vpc"
+      }
+    },
+    "ElasticIpNode2": {
+      "Type": "AWS::EC2::EIP",
+      "Condition": "MultipleNodeCnd",
+      "Properties": {
+        "Domain": "vpc"
+      }
+    },
+    "ElasticIpNode3": {
+      "Type": "AWS::EC2::EIP",
+      "Condition": "MultipleNodeCnd",
+      "Properties": {
+        "Domain": "vpc"
+      }
+    },
+    "ElasticIpNode4": {
+      "Type": "AWS::EC2::EIP",
+      "Condition": "CreateLargeClusterCnd",
+      "Properties": {
+        "Domain": "vpc"
+      }
+    },
+    "ElasticIpNode5": {
+      "Type": "AWS::EC2::EIP",
+      "Condition": "CreateLargeClusterCnd",
+      "Properties": {
+        "Domain": "vpc"
+      }
+    },
+    "ElasticIpNode6": {
+      "Type": "AWS::EC2::EIP",
+      "Condition": "CreateLargeClusterCnd",
+      "Properties": {
+        "Domain": "vpc"
+      },
+    },
+    "HadoopGateway": {
+      "Type": "AWS::EC2::Instance",
+      "Condition": "SingleNodeCnd",
+      "Metadata": {
+        "AWS::CloudFormation::Init": {
+          "configSets": {
+            "InstallAndRun": [
+              "Install",
+              "Configure"
+            ]
+          },
+          "Install": {
+            "files": {
+              "/home/ec2-user/replaceHostname.sh": {
+                "content": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "#!/bin/bash\n",
+                      "publicDnsName=$(curl http://169.254.169.254/latest/meta-data/public-hostname) \n",
+                      "hostname $publicDnsName \n",
+                      "sudo su -c \"sed --in-place '1s/.*/$publicDnsName/' /etc/hostname\" \n",
+                      "sudo su -c \"echo HOSTNAME=$publicDnsName >> /etc/sysconfig/network\" \n",
+                      "sudo su -c \"sed -i '$ a preserve_hostname: true' /etc/cloud/cloud.cfg\" \n",
+                      "#sudo rpm -e sats_analytics > /tmp/uba.txt 2>&1; sudo rpm -ivh /tmp/sats_analytics-3.0-811.x86_64.rpm\n",
+                      "#sudo rpm -ivh /tmp/com.infa.sats.ua.assembly_2.5.0-SNAPSHOT_x86_64.rpm\n"
+                    ]
+                  ]
+                },
+                "mode": "000770",
+                "owner": "ec2-user",
+                "group": "ec2-user"
+              },
+              "/etc/profile.d/setJavaForScanners.sh": {
+                "content": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "#!/bin/bash \n",
+                      "ln -s /usr/jdk64/jdk1.8.0_60/bin/java /etc/alternatives/java &> /dev/null\n",
+                      "ln -s /etc/alternatives/java /usr/bin/java &> /dev/null\n"
+                    ]
+                  ]
+                },
+                "mode": "000700",
+                "owner": "root",
+                "group": "root"
+              }
+            }
+          },
+          "Configure": {
+            "commands": {
+              "01_ReplaceHostname": {
+                "command": "sudo /home/ec2-user/replaceHostname.sh"
+              }
+            }
+          }
+        }
+      },
+      "Properties": {
+        "ImageId": {
+          "Fn::FindInMap": [
+            "AWSAMIRegionMap",
+            {
+              "Ref": "AWS::Region"
+            },
+            "INFASATSCLUSTERHVM"
+          ]
+        },
+        "InstanceType": {
+          "Fn::FindInMap": [
+            "ClusterSizeMapping",
+            {
+              "Ref": "ICSClusterSize"
+            },
+            "InstanceType"
+          ]
+        },
+        "KeyName": {
+          "Ref": "KeyName"
+        },
+        "InstanceInitiatedShutdownBehavior": "stop",
+        "SecurityGroupIds": [
+          {
+            "Ref": "AdditionalICSSecurityGroup"
+          }
+        ],
+        "SubnetId": {
+          "Ref": "InformaticaServerSubnetID"
+        },
+        "UserData": {
+          "Fn::Base64": {
+            "Fn::Join": [
+              "",
+              [
+                "#!/bin/bash\n",
+                "sudo yum update -y aws-cfn-bootstrap\n",
+                "# Install the files and packages from the metadata\n",
+                "/opt/aws/bin/cfn-init -v ",
+                "         --stack ",
+                {
+                  "Ref": "AWS::StackName"
+                },
+                "         --resource HadoopGateway ",
+                "         --configsets InstallAndRun ",
+                "         --region ",
+                {
+                  "Ref": "AWS::Region"
+                },
+                "\n",
+                "# Signal the status from cfn-init\n",
+                "/opt/aws/bin/cfn-signal -e $? ",
+                " --stack ",
+                {
+                  "Ref": "AWS::StackName"
+                },
+                " --resource HadoopGateway ",
+                " --region ",
+                {
+                  "Ref": "AWS::Region"
+                },
+                "\n"
+              ]
+            ]
+          }
+        }
+      }
+    },
+    "MultiNodeHadoopGateway": {
+      "Type": "AWS::EC2::Instance",
+      "Condition": "MultipleNodeCnd",
+      "Metadata": {
+        "AWS::CloudFormation::Init": {
+          "configSets": {
+            "InstallAndRun": [
+              "Install",
+              "Configure"
+            ]
+          },
+          "Install": {
+            "files": {
+              "/home/ec2-user/replaceHostname.sh": {
+                "content": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "#!/bin/bash\n",
+                      "publicDnsName=$(curl http://169.254.169.254/latest/meta-data/public-hostname) \n",
+                      "hostname $publicDnsName \n",
+                      "sudo su -c \"sed --in-place '1s/.*/$publicDnsName/' /etc/hostname\" \n",
+                      "sudo su -c \"echo HOSTNAME=$publicDnsName >> /etc/sysconfig/network\" \n",
+                      "sudo su -c \"sed -i '$ a preserve_hostname: true' /etc/cloud/cloud.cfg\" \n",
+                      "#sudo rpm -e sats_analytics > /tmp/uba.txt 2>&1; sudo rpm -ivh /tmp/sats_analytics-3.0-811.x86_64.rpm\n",
+                      "#sudo rpm -ivh /tmp/com.infa.sats.ua.assembly_2.5.0-SNAPSHOT_x86_64.rpm\n"
+                    ]
+                  ]
+                },
+                "mode": "000770",
+                "owner": "ec2-user",
+                "group": "ec2-user"
+              },
+              "/etc/profile.d/setJavaForScanners.sh": {
+                "content": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "#!/bin/bash \n",
+                      "ln -s /usr/jdk64/jdk1.8.0_60/bin/java /etc/alternatives/java &> /dev/null\n",
+                      "ln -s /etc/alternatives/java /usr/bin/java &> /dev/null\n"
+                    ]
+                  ]
+                },
+                "mode": "000700",
+                "owner": "root",
+                "group": "root"
+              }
+            }
+          },
+          "Configure": {
+            "commands": {
+              "01_ReplaceHostname": {
+                "command": "sudo /home/ec2-user/replaceHostname.sh"
+              }
+            }
+          }
+        }
+      },
+      "Properties": {
+        "ImageId": {
+          "Fn::FindInMap": [
+            "AWSAMIRegionMap",
+            {
+              "Ref": "AWS::Region"
+            },
+            "INFASATSCLUSTERHVM"
+          ]
+        },
+        "InstanceType": {
+          "Fn::FindInMap": [
+            "ClusterSizeMapping",
+            {
+              "Ref": "ICSClusterSize"
+            },
+            "InstanceType"
+          ]
+        },
+        "KeyName": {
+          "Ref": "KeyName"
+        },
+        "InstanceInitiatedShutdownBehavior": "stop",
+        "SecurityGroupIds": [
+          {
+            "Ref": "AdditionalICSSecurityGroup"
+          }
+        ],
+        "SubnetId": {
+          "Ref": "InformaticaServerSubnetID"
+        },
+        "UserData": {
+          "Fn::Base64": {
+            "Fn::Join": [
+              "",
+              [
+                "#!/bin/bash\n",
+                "sudo yum update -y aws-cfn-bootstrap\n",
+                "# Install the files and packages from the metadata\n",
+                "/opt/aws/bin/cfn-init -v ",
+                "         --stack ",
+                {
+                  "Ref": "AWS::StackName"
+                },
+                "         --resource MultiNodeHadoopGateway ",
+                "         --configsets InstallAndRun ",
+                "         --region ",
+                {
+                  "Ref": "AWS::Region"
+                },
+                "\n",
+                "# Signal the status from cfn-init\n",
+                "/opt/aws/bin/cfn-signal -e $? ",
+                " --stack ",
+                {
+                  "Ref": "AWS::StackName"
+                },
+                " --resource MultiNodeHadoopGateway ",
+                " --region ",
+                {
+                  "Ref": "AWS::Region"
+                },
+                "\n"
+              ]
+            ]
+          }
+        }
+      }
+    },
+    "MultiNodeHadoopNode2": {
+      "Type": "AWS::EC2::Instance",
+      "Condition": "MultipleNodeCnd",
+      "Metadata": {
+        "AWS::CloudFormation::Init": {
+          "configSets": {
+            "InstallAndRun": [
+              "Install",
+              "Configure"
+            ]
+          },
+          "Install": {
+            "files": {
+              "/home/ec2-user/replaceHostname.sh": {
+                "content": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "#!/bin/bash\n",
+                      "publicDnsName=$(curl http://169.254.169.254/latest/meta-data/public-hostname) \n",
+                      "hostname $publicDnsName \n",
+                      "sudo su -c \"sed --in-place '1s/.*/$publicDnsName/' /etc/hostname\" \n",
+                      "sudo su -c \"echo HOSTNAME=$publicDnsName >> /etc/sysconfig/network\" \n",
+                      "sudo su -c \"sed -i '$ a preserve_hostname: true' /etc/cloud/cloud.cfg\" \n",
+                      "#sudo rpm -e sats_analytics > /tmp/uba.txt 2>&1; sudo rpm -ivh /tmp/sats_analytics-3.0-811.x86_64.rpm\n",
+                      "#sudo rpm -ivh /tmp/com.infa.sats.ua.assembly_2.5.0-SNAPSHOT_x86_64.rpm\n"
+                    ]
+                  ]
+                },
+                "mode": "000770",
+                "owner": "ec2-user",
+                "group": "ec2-user"
+              },
+              "/etc/profile.d/setJavaForScanners.sh": {
+                "content": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "#!/bin/bash \n",
+                      "ln -s /usr/jdk64/jdk1.8.0_60/bin/java /etc/alternatives/java &> /dev/null\n",
+                      "ln -s /etc/alternatives/java /usr/bin/java &> /dev/null\n"
+                    ]
+                  ]
+                },
+                "mode": "000700",
+                "owner": "root",
+                "group": "root"
+              }
+            }
+          },
+          "Configure": {
+            "commands": {
+              "01_ReplaceHostname": {
+                "command": "sudo /home/ec2-user/replaceHostname.sh"
+              }
+            }
+          }
+        }
+      },
+      "Properties": {
+        "ImageId": {
+          "Fn::FindInMap": [
+            "AWSAMIRegionMap",
+            {
+              "Ref": "AWS::Region"
+            },
+            "INFASATSCLUSTERHVM"
+          ]
+        },
+        "InstanceType": {
+          "Fn::FindInMap": [
+            "ClusterSizeMapping",
+            {
+              "Ref": "ICSClusterSize"
+            },
+            "InstanceType"
+          ]
+        },
+        "KeyName": {
+          "Ref": "KeyName"
+        },
+        "InstanceInitiatedShutdownBehavior": "stop",
+        "SecurityGroupIds": [
+          {
+            "Ref": "AdditionalICSSecurityGroup"
+          }
+        ],
+        "SubnetId": {
+          "Ref": "InformaticaServerSubnetID"
+        },
+        "Tags": [
+          {
+            "Key": "NAME",
+            "Value": {
+              "Fn::Join": [
+                "-",
+                [
+                  "HadoopNode",
+                  "2"
+                ]
+              ]
+            }
+          }
+        ],
+        "UserData": {
+          "Fn::Base64": {
+            "Fn::Join": [
+              "",
+              [
+                "#!/bin/bash\n",
+                "sudo yum update -y aws-cfn-bootstrap\n",
+                "# Install the files and packages from the metadata\n",
+                "/opt/aws/bin/cfn-init -v ",
+                "         --stack ",
+                {
+                  "Ref": "AWS::StackName"
+                },
+                "         --resource MultiNodeHadoopNode2 ",
+                "         --configsets InstallAndRun ",
+                "         --region ",
+                {
+                  "Ref": "AWS::Region"
+                },
+                "\n",
+                "# Signal the status from cfn-init\n",
+                "/opt/aws/bin/cfn-signal -e $? ",
+                " --stack ",
+                {
+                  "Ref": "AWS::StackName"
+                },
+                " --resource MultiNodeHadoopNode2 ",
+                " --region ",
+                {
+                  "Ref": "AWS::Region"
+                },
+                "\n"
+              ]
+            ]
+          }
+        }
+      }
+    },
+    "MultiNodeHadoopNode3": {
+      "Type": "AWS::EC2::Instance",
+      "Condition": "MultipleNodeCnd",
+      "Metadata": {
+        "AWS::CloudFormation::Init": {
+          "configSets": {
+            "InstallAndRun": [
+              "Install",
+              "Configure"
+            ]
+          },
+          "Install": {
+            "files": {
+              "/home/ec2-user/replaceHostname.sh": {
+                "content": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "#!/bin/bash\n",
+                      "publicDnsName=$(curl http://169.254.169.254/latest/meta-data/public-hostname) \n",
+                      "hostname $publicDnsName \n",
+                      "sudo su -c \"sed --in-place '1s/.*/$publicDnsName/' /etc/hostname\" \n",
+                      "sudo su -c \"echo HOSTNAME=$publicDnsName >> /etc/sysconfig/network\" \n",
+                      "sudo su -c \"sed -i '$ a preserve_hostname: true' /etc/cloud/cloud.cfg\" \n",
+                      "#sudo rpm -e sats_analytics > /tmp/uba.txt 2>&1; sudo rpm -ivh /tmp/sats_analytics-3.0-811.x86_64.rpm\n",
+                      "#sudo rpm -ivh /tmp/com.infa.sats.ua.assembly_2.5.0-SNAPSHOT_x86_64.rpm\n"
+                    ]
+                  ]
+                },
+                "mode": "000770",
+                "owner": "ec2-user",
+                "group": "ec2-user"
+              },
+              "/etc/profile.d/setJavaForScanners.sh": {
+                "content": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "#!/bin/bash \n",
+                      "ln -s /usr/jdk64/jdk1.8.0_60/bin/java /etc/alternatives/java &> /dev/null\n",
+                      "ln -s /etc/alternatives/java /usr/bin/java &> /dev/null\n"
+                    ]
+                  ]
+                },
+                "mode": "000700",
+                "owner": "root",
+                "group": "root"
+              }
+            }
+          },
+          "Configure": {
+            "commands": {
+              "01_ReplaceHostname": {
+                "command": "sudo /home/ec2-user/replaceHostname.sh"
+              }
+            }
+          }
+        }
+      },
+      "Properties": {
+        "ImageId": {
+          "Fn::FindInMap": [
+            "AWSAMIRegionMap",
+            {
+              "Ref": "AWS::Region"
+            },
+            "INFASATSCLUSTERHVM"
+          ]
+        },
+        "InstanceType": {
+          "Fn::FindInMap": [
+            "ClusterSizeMapping",
+            {
+              "Ref": "ICSClusterSize"
+            },
+            "InstanceType"
+          ]
+        },
+        "KeyName": {
+          "Ref": "KeyName"
+        },
+        "InstanceInitiatedShutdownBehavior": "stop",
+        "SecurityGroupIds": [
+          {
+            "Ref": "AdditionalICSSecurityGroup"
+          }
+        ],
+        "SubnetId": {
+          "Ref": "InformaticaServerSubnetID"
+        },
+        "Tags": [
+          {
+            "Key": "NAME",
+            "Value": {
+              "Fn::Join": [
+                "-",
+                [
+                  "HadoopNode",
+                  "3"
+                ]
+              ]
+            }
+          }
+        ],
+        "UserData": {
+          "Fn::Base64": {
+            "Fn::Join": [
+              "",
+              [
+                "#!/bin/bash\n",
+                "sudo yum update -y aws-cfn-bootstrap\n",
+                "# Install the files and packages from the metadata\n",
+                "/opt/aws/bin/cfn-init -v ",
+                "         --stack ",
+                {
+                  "Ref": "AWS::StackName"
+                },
+                "         --resource MultiNodeHadoopNode3 ",
+                "         --configsets InstallAndRun ",
+                "         --region ",
+                {
+                  "Ref": "AWS::Region"
+                },
+                "\n",
+                "# Signal the status from cfn-init\n",
+                "/opt/aws/bin/cfn-signal -e $? ",
+                " --stack ",
+                {
+                  "Ref": "AWS::StackName"
+                },
+                " --resource MultiNodeHadoopNode3 ",
+                " --region ",
+                {
+                  "Ref": "AWS::Region"
+                },
+                "\n"
+              ]
+            ]
+          }
+        }
+      }
+    },
+    "MultiNodeHadoopNode4": {
+      "Type": "AWS::EC2::Instance",
+      "Condition": "CreateLargeClusterCnd",
+      "Metadata": {
+        "AWS::CloudFormation::Init": {
+          "configSets": {
+            "InstallAndRun": [
+              "Install",
+              "Configure"
+            ]
+          },
+          "Install": {
+            "files": {
+              "/home/ec2-user/replaceHostname.sh": {
+                "content": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "#!/bin/bash\n",
+                      "publicDnsName=$(curl http://169.254.169.254/latest/meta-data/public-hostname) \n",
+                      "hostname $publicDnsName \n",
+                      "sudo su -c \"sed --in-place '1s/.*/$publicDnsName/' /etc/hostname\" \n",
+                      "sudo su -c \"echo HOSTNAME=$publicDnsName >> /etc/sysconfig/network\" \n",
+                      "sudo su -c \"sed -i '$ a preserve_hostname: true' /etc/cloud/cloud.cfg\" \n",
+                      "#sudo rpm -e sats_analytics > /tmp/uba.txt 2>&1; sudo rpm -ivh /tmp/sats_analytics-3.0-811.x86_64.rpm\n",
+                      "#sudo rpm -ivh /tmp/com.infa.sats.ua.assembly_2.5.0-SNAPSHOT_x86_64.rpm\n"
+                    ]
+                  ]
+                },
+                "mode": "000770",
+                "owner": "ec2-user",
+                "group": "ec2-user"
+              },
+              "/etc/profile.d/setJavaForScanners.sh": {
+                "content": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "#!/bin/bash \n",
+                      "ln -s /usr/jdk64/jdk1.8.0_60/bin/java /etc/alternatives/java &> /dev/null\n",
+                      "ln -s /etc/alternatives/java /usr/bin/java &> /dev/null\n"
+                    ]
+                  ]
+                },
+                "mode": "000700",
+                "owner": "root",
+                "group": "root"
+              }
+            }
+          },
+          "Configure": {
+            "commands": {
+              "01_ReplaceHostname": {
+                "command": "sudo /home/ec2-user/replaceHostname.sh"
+              }
+            }
+          }
+        }
+      },
+      "Properties": {
+        "ImageId": {
+          "Fn::FindInMap": [
+            "AWSAMIRegionMap",
+            {
+              "Ref": "AWS::Region"
+            },
+            "INFASATSCLUSTERHVM"
+          ]
+        },
+        "InstanceType": {
+          "Fn::FindInMap": [
+            "ClusterSizeMapping",
+            {
+              "Ref": "ICSClusterSize"
+            },
+            "InstanceType"
+          ]
+        },
+        "KeyName": {
+          "Ref": "KeyName"
+        },
+        "InstanceInitiatedShutdownBehavior": "stop",
+        "SecurityGroupIds": [
+          {
+            "Ref": "AdditionalICSSecurityGroup"
+          }
+        ],
+        "SubnetId": {
+          "Ref": "InformaticaServerSubnetID"
+        },
+        "Tags": [
+          {
+            "Key": "NAME",
+            "Value": {
+              "Fn::Join": [
+                "-",
+                [
+                  "HadoopNode",
+                  "4"
+                ]
+              ]
+            }
+          }
+        ],
+        "UserData": {
+          "Fn::Base64": {
+            "Fn::Join": [
+              "",
+              [
+                "#!/bin/bash\n",
+                "sudo yum update -y aws-cfn-bootstrap\n",
+                "# Install the files and packages from the metadata\n",
+                "/opt/aws/bin/cfn-init -v ",
+                "         --stack ",
+                {
+                  "Ref": "AWS::StackName"
+                },
+                "         --resource MultiNodeHadoopNode4 ",
+                "         --configsets InstallAndRun ",
+                "         --region ",
+                {
+                  "Ref": "AWS::Region"
+                },
+                "\n",
+                "# Signal the status from cfn-init\n",
+                "/opt/aws/bin/cfn-signal -e $? ",
+                " --stack ",
+                {
+                  "Ref": "AWS::StackName"
+                },
+                " --resource MultiNodeHadoopNode4 ",
+                " --region ",
+                {
+                  "Ref": "AWS::Region"
+                },
+                "\n"
+              ]
+            ]
+          }
+        }
+      }
+    },
+    "MultiNodeHadoopNode5": {
+      "Type": "AWS::EC2::Instance",
+      "Condition": "CreateLargeClusterCnd",
+      "Metadata": {
+        "AWS::CloudFormation::Init": {
+          "configSets": {
+            "InstallAndRun": [
+              "Install",
+              "Configure"
+            ]
+          },
+          "Install": {
+            "files": {
+              "/home/ec2-user/replaceHostname.sh": {
+                "content": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "#!/bin/bash\n",
+                      "publicDnsName=$(curl http://169.254.169.254/latest/meta-data/public-hostname) \n",
+                      "hostname $publicDnsName \n",
+                      "sudo su -c \"sed --in-place '1s/.*/$publicDnsName/' /etc/hostname\" \n",
+                      "sudo su -c \"echo HOSTNAME=$publicDnsName >> /etc/sysconfig/network\" \n",
+                      "sudo su -c \"sed -i '$ a preserve_hostname: true' /etc/cloud/cloud.cfg\" \n",
+                      "#sudo rpm -e sats_analytics > /tmp/uba.txt 2>&1; sudo rpm -ivh /tmp/sats_analytics-3.0-811.x86_64.rpm\n",
+                      "#sudo rpm -ivh /tmp/com.infa.sats.ua.assembly_2.5.0-SNAPSHOT_x86_64.rpm\n"
+                    ]
+                  ]
+                },
+                "mode": "000770",
+                "owner": "ec2-user",
+                "group": "ec2-user"
+              },
+              "/etc/profile.d/setJavaForScanners.sh": {
+                "content": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "#!/bin/bash \n",
+                      "ln -s /usr/jdk64/jdk1.8.0_60/bin/java /etc/alternatives/java &> /dev/null\n",
+                      "ln -s /etc/alternatives/java /usr/bin/java &> /dev/null\n"
+                    ]
+                  ]
+                },
+                "mode": "000700",
+                "owner": "root",
+                "group": "root"
+              }
+            }
+          },
+          "Configure": {
+            "commands": {
+              "01_ReplaceHostname": {
+                "command": "sudo /home/ec2-user/replaceHostname.sh"
+              }
+            }
+          }
+        }
+      },
+      "Properties": {
+        "ImageId": {
+          "Fn::FindInMap": [
+            "AWSAMIRegionMap",
+            {
+              "Ref": "AWS::Region"
+            },
+            "INFASATSCLUSTERHVM"
+          ]
+        },
+        "InstanceType": {
+          "Fn::FindInMap": [
+            "ClusterSizeMapping",
+            {
+              "Ref": "ICSClusterSize"
+            },
+            "InstanceType"
+          ]
+        },
+        "KeyName": {
+          "Ref": "KeyName"
+        },
+        "InstanceInitiatedShutdownBehavior": "stop",
+        "SecurityGroupIds": [
+          {
+            "Ref": "AdditionalICSSecurityGroup"
+          }
+        ],
+        "SubnetId": {
+          "Ref": "InformaticaServerSubnetID"
+        },
+        "Tags": [
+          {
+            "Key": "NAME",
+            "Value": {
+              "Fn::Join": [
+                "-",
+                [
+                  "HadoopNode",
+                  "5"
+                ]
+              ]
+            }
+          }
+        ],
+        "UserData": {
+          "Fn::Base64": {
+            "Fn::Join": [
+              "",
+              [
+                "#!/bin/bash\n",
+                "sudo yum update -y aws-cfn-bootstrap\n",
+                "# Install the files and packages from the metadata\n",
+                "/opt/aws/bin/cfn-init -v ",
+                "         --stack ",
+                {
+                  "Ref": "AWS::StackName"
+                },
+                "         --resource MultiNodeHadoopNode5 ",
+                "         --configsets InstallAndRun ",
+                "         --region ",
+                {
+                  "Ref": "AWS::Region"
+                },
+                "\n",
+                "# Signal the status from cfn-init\n",
+                "/opt/aws/bin/cfn-signal -e $? ",
+                " --stack ",
+                {
+                  "Ref": "AWS::StackName"
+                },
+                " --resource MultiNodeHadoopNode5 ",
+                " --region ",
+                {
+                  "Ref": "AWS::Region"
+                },
+                "\n"
+              ]
+            ]
+          }
+        }
+      }
+    },
+    "MultiNodeHadoopNode6": {
+      "Type": "AWS::EC2::Instance",
+      "Condition": "CreateLargeClusterCnd",
+      "Metadata": {
+        "AWS::CloudFormation::Init": {
+          "configSets": {
+            "InstallAndRun": [
+              "Install",
+              "Configure"
+            ]
+          },
+          "Install": {
+            "files": {
+              "/home/ec2-user/replaceHostname.sh": {
+                "content": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "#!/bin/bash\n",
+                      "publicDnsName=$(curl http://169.254.169.254/latest/meta-data/public-hostname) \n",
+                      "hostname $publicDnsName \n",
+                      "sudo su -c \"sed --in-place '1s/.*/$publicDnsName/' /etc/hostname\" \n",
+                      "sudo su -c \"echo HOSTNAME=$publicDnsName >> /etc/sysconfig/network\" \n",
+                      "sudo su -c \"sed -i '$ a preserve_hostname: true' /etc/cloud/cloud.cfg\" \n",
+                      "#sudo rpm -e sats_analytics > /tmp/uba.txt 2>&1; sudo rpm -ivh /tmp/sats_analytics-3.0-811.x86_64.rpm\n",
+                      "#sudo rpm -ivh /tmp/com.infa.sats.ua.assembly_2.5.0-SNAPSHOT_x86_64.rpm\n"
+                    ]
+                  ]
+                },
+                "mode": "000770",
+                "owner": "ec2-user",
+                "group": "ec2-user"
+              },
+              "/etc/profile.d/setJavaForScanners.sh": {
+                "content": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "#!/bin/bash \n",
+                      "ln -s /usr/jdk64/jdk1.8.0_60/bin/java /etc/alternatives/java &> /dev/null\n",
+                      "ln -s /etc/alternatives/java /usr/bin/java &> /dev/null\n"
+                    ]
+                  ]
+                },
+                "mode": "000700",
+                "owner": "root",
+                "group": "root"
+              }
+            }
+          },
+          "Configure": {
+            "commands": {
+              "01_ReplaceHostname": {
+                "command": "sudo /home/ec2-user/replaceHostname.sh"
+              }
+            }
+          }
+        }
+      },
+      "Properties": {
+        "ImageId": {
+          "Fn::FindInMap": [
+            "AWSAMIRegionMap",
+            {
+              "Ref": "AWS::Region"
+            },
+            "INFASATSCLUSTERHVM"
+          ]
+        },
+        "InstanceType": {
+          "Fn::FindInMap": [
+            "ClusterSizeMapping",
+            {
+              "Ref": "ICSClusterSize"
+            },
+            "InstanceType"
+          ]
+        },
+        "KeyName": {
+          "Ref": "KeyName"
+        },
+        "InstanceInitiatedShutdownBehavior": "stop",
+        "SecurityGroupIds": [
+          {
+            "Ref": "AdditionalICSSecurityGroup"
+          }
+        ],
+        "SubnetId": {
+          "Ref": "InformaticaServerSubnetID"
+        },
+        "Tags": [
+          {
+            "Key": "NAME",
+            "Value": {
+              "Fn::Join": [
+                "-",
+                [
+                  "HadoopNode",
+                  "6"
+                ]
+              ]
+            }
+          }
+        ],
+        "UserData": {
+          "Fn::Base64": {
+            "Fn::Join": [
+              "",
+              [
+                "#!/bin/bash\n",
+                "sudo yum update -y aws-cfn-bootstrap\n",
+                "# Install the files and packages from the metadata\n",
+                "/opt/aws/bin/cfn-init -v ",
+                "         --stack ",
+                {
+                  "Ref": "AWS::StackName"
+                },
+                "         --resource MultiNodeHadoopNode6 ",
+                "         --configsets InstallAndRun ",
+                "         --region ",
+                {
+                  "Ref": "AWS::Region"
+                },
+                "\n",
+                "# Signal the status from cfn-init\n",
+                "/opt/aws/bin/cfn-signal -e $? ",
+                " --stack ",
+                {
+                  "Ref": "AWS::StackName"
+                },
+                " --resource MultiNodeHadoopNode6 ",
+                " --region ",
+                {
+                  "Ref": "AWS::Region"
+                },
+                "\n"
+              ]
+            ]
+          }
+        }
+      }
+    },
+    "Node1IpAssoc": {
+      "Type": "AWS::EC2::EIPAssociation",
+      "Properties": {
+        "InstanceId": {
+          "Fn::If": [
+            "SingleNodeCnd",
+            {
+              "Ref": "HadoopGateway"
+            },
+            {
+              "Ref": "MultiNodeHadoopGateway"
+            }
+          ]
+        },
+        "AllocationId": {
+          "Fn::GetAtt": [
+            "ElasticIpNode1",
+            "AllocationId"
+          ]
+        }
+      }
+    },
+    "Node2IpAssoc": {
+      "Type": "AWS::EC2::EIPAssociation",
+      "Condition": "MultipleNodeCnd",
+      "Properties": {
+        "InstanceId": {
+          "Ref": "MultiNodeHadoopNode2"
+        },
+        "AllocationId": {
+          "Fn::GetAtt": [
+            "ElasticIpNode2",
+            "AllocationId"
+          ]
+        }
+      }
+    },
+    "Node3IpAssoc": {
+      "Type": "AWS::EC2::EIPAssociation",
+      "Condition": "MultipleNodeCnd",
+      "Properties": {
+        "InstanceId": {
+          "Ref": "MultiNodeHadoopNode3"
+        },
+        "AllocationId": {
+          "Fn::GetAtt": [
+            "ElasticIpNode3",
+            "AllocationId"
+          ]
+        }
+      }
+    },
+    "Node4IpAssoc": {
+      "Type": "AWS::EC2::EIPAssociation",
+      "Condition": "CreateLargeClusterCnd",
+      "Properties": {
+        "InstanceId": {
+          "Ref": "MultiNodeHadoopNode4"
+        },
+        "AllocationId": {
+          "Fn::GetAtt": [
+            "ElasticIpNode4",
+            "AllocationId"
+          ]
+        }
+      }
+    },
+    "Node5IpAssoc": {
+      "Type": "AWS::EC2::EIPAssociation",
+      "Condition": "CreateLargeClusterCnd",
+      "Properties": {
+        "InstanceId": {
+          "Ref": "MultiNodeHadoopNode5"
+        },
+        "AllocationId": {
+          "Fn::GetAtt": [
+            "ElasticIpNode5",
+            "AllocationId"
+          ]
+        }
+      }
+    },
+    "Node6IpAssoc": {
+      "Type": "AWS::EC2::EIPAssociation",
+      "Condition": "CreateLargeClusterCnd",
+      "Properties": {
+        "InstanceId": {
+          "Ref": "MultiNodeHadoopNode6"
+        },
+        "AllocationId": {
+          "Fn::GetAtt": [
+            "ElasticIpNode6",
+            "AllocationId"
+          ]
+        }
+      }
+    },
+    "AdditionalICSSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "Allowing all ports for all IPs incoming and outgoing",
+        "VpcId": {
+          "Ref": "VPCID"
+        },
+        "SecurityGroupIngress": [
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "0",
+            "ToPort": "65535",
+            "CidrIp": {
+              "Ref": "IPAddressRange"
+            },
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "0",
+            "ToPort": "65535",
+            "SourceSecurityGroupId": {
+              "Ref": "InfaDomainSecurityGroup"
+            }
+          },
+          {
+            "IpProtocol": "udp",
+            "FromPort": "0",
+            "ToPort": "65535",
+            "CidrIp": {
+              "Ref": "IPAddressRange"
+            }
+          }
+        ],
+        "SecurityGroupEgress": [
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "0",
+            "ToPort": "65535",
+            "CidrIp": {
+              "Ref": "IPAddressRange"
+            }
+          },
+          {
+            "IpProtocol": "udp",
+            "FromPort": "0",
+            "ToPort": "65535",
+            "CidrIp": {
+              "Ref": "IPAddressRange"
+            }
+          }
+        ]
+      }
+    },
+    "InfaDBSubnetGroup": {
+      "Type": "AWS::RDS::DBSubnetGroup",
+      "Properties": {
+        "DBSubnetGroupDescription": "Subnets available for the RDS DB Instance",
+        "SubnetIds": {
+          "Ref": "DBSubnetIDs"
+        }
+      }
+    },
+    "InfaDB": {
+      "Type": "AWS::RDS::DBInstance",
+      "Properties": {
+        "DBInstanceIdentifier": {
+          "Fn::Join": [
+            "",
+            [
+              "infadb-",
+              {
+                "Ref": "AWS::StackName"
+              }
+            ]
+          ]
+        },
+        "AllocatedStorage": "500",
+        "MultiAZ": {
+          "Fn::If": [
+            "SupportMultiAZCnd",
+            "true",
+            {
+              "Ref": "AWS::NoValue"
+            }
+          ]
+        },
+        "StorageType": "gp2",
+        "LicenseModel": "license-included",
+        "DBInstanceClass": {
+          "Fn::If": [
+            "DoNotSupportDbM4Class",
+            "db.m3.2xlarge",
+            "db.m4.2xlarge"
+          ]
+        },
+        "DBSubnetGroupName": {
+          "Ref": "InfaDBSubnetGroup"
+        },
+        "VPCSecurityGroups": [
+          {
+            "Ref": "InfaDBSecurityGroup"
+          }
+        ],
+        "Engine": "sqlserver-se",
+        "EngineVersion" : "12.00.5000.0.v1",
+        "MasterUsername": {
+          "Ref": "DBUser"
+        },
+        "MasterUserPassword": {
+          "Ref": "DBPassword"
+        }
+      }
+    },
+    "InfaDBSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "Informatica domain access to RDS DB",
+        "VpcId": {
+          "Ref": "VPCID"
+        },
+        "SecurityGroupIngress": [
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "1433",
+            "ToPort": "1433",
+            "SourceSecurityGroupId": {
+              "Ref": "InfaDomainSecurityGroup"
+            }
+          }
+        ]
+      }
+    },
+    "InfaDomainSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "Enable Informatica Domain Server Access",
+        "VpcId": {
+          "Ref": "VPCID"
+        },
+        "SecurityGroupIngress": [
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "6005",
+            "ToPort": "6005",
+            "CidrIp": {
+              "Ref": "IPAddressRange"
+            }
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "6006",
+            "ToPort": "6006",
+            "CidrIp": {
+              "Ref": "IPAddressRange"
+            }
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "6008",
+            "ToPort": "6008",
+            "CidrIp": {
+              "Ref": "IPAddressRange"
+            }
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "6014",
+            "ToPort": "6114",
+            "CidrIp": {
+              "Ref": "IPAddressRange"
+            }
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "8085",
+            "ToPort": "8085",
+            "CidrIp": {
+              "Ref": "IPAddressRange"
+            }
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "9085",
+            "ToPort": "9085",
+            "CidrIp": {
+              "Ref": "IPAddressRange"
+            }
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "8105",
+            "ToPort": "8105",
+            "CidrIp": {
+              "Ref": "IPAddressRange"
+            }
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "8095",
+            "ToPort": "8095",
+            "CidrIp": {
+              "Ref": "IPAddressRange"
+            }
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "8084",
+            "ToPort": "8084",
+            "CidrIp": {
+              "Ref": "IPAddressRange"
+            }
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "8089",
+            "ToPort": "8089",
+            "CidrIp": {
+              "Ref": "IPAddressRange"
+            }
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "8785",
+            "ToPort": "8785",
+            "CidrIp": {
+              "Ref": "IPAddressRange"
+            }
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "10250",
+            "ToPort": "10250",
+            "CidrIp": {
+              "Ref": "IPAddressRange"
+            }
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "7333",
+            "ToPort": "7333",
+            "CidrIp": {
+              "Ref": "IPAddressRange"
+            }
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "443",
+            "ToPort": "443",
+            "CidrIp": {
+              "Ref": "IPAddressRange"
+            }
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "0",
+            "ToPort": "65535",
+            "CidrIp": {
+              "Ref": "IPAddressRange"
+            }
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "22",
+            "ToPort": "22",
+            "CidrIp": {
+              "Ref": "IPAddressRange"
+            }
+          },
+          {
+            "IpProtocol": "udp",
+            "FromPort": "0",
+            "ToPort": "65535",
+            "CidrIp": {
+              "Ref": "IPAddressRange"
+            }
+          }
+        ]
+      }
+    },
+    "InstanceRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "ec2.amazonaws.com"
+                ]
+              },
+              "Action": [
+                "sts:AssumeRole"
+              ]
+            }
+          ]
+        },
+        "Path": "/"
+      }
+    },
+    "RolePolicies": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyName": "S3Download",
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "s3:Get*",
+                "s3:List*"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:aws:s3:::",
+                      {
+                        "Ref": "InformaticaSATSKeyS3Bucket"
+                      },
+                      "/",
+                      {
+                        "Ref": "InformaticaSATSKeyName"
+                      }
+                    ]
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "Roles": [
+          {
+            "Ref": "InstanceRole"
+          }
+        ]
+      }
+    },
+    "InstanceProfile": {
+      "Type": "AWS::IAM::InstanceProfile",
+      "Properties": {
+        "Path": "/",
+        "Roles": [
+          {
+            "Ref": "InstanceRole"
+          }
+        ]
+      }
+    },
+    "AdministrationServerEIP": {
+      "Type": "AWS::EC2::EIP",
+      "Properties": {
+        "Domain": "vpc"
+      }
+    },
+    "AdministrationServerNetInterface": {
+      "Type": "AWS::EC2::NetworkInterface",
+      "Properties": {
+        "Description": "Interface for Administrator Server traffic",
+        "SubnetId": {
+          "Ref": "InformaticaServerSubnetID"
+        },
+        "GroupSet": [
+          {
+            "Ref": "InfaDomainSecurityGroup"
+          }
+        ],
+        "SourceDestCheck": "true"
+      }
+    },
+    "AdministrationServerAssoc": {
+      "Type": "AWS::EC2::EIPAssociation",
+      "Properties": {
+        "AllocationId": {
+          "Fn::GetAtt": [
+            "AdministrationServerEIP",
+            "AllocationId"
+          ]
+        },
+        "NetworkInterfaceId": {
+          "Ref": "AdministrationServerNetInterface"
+        }
+      }
+    },
+    "AdministrationServer": {
+      "Type": "AWS::EC2::Instance",
+      "Metadata": {
+        "AWS::CloudFormation::Authentication": {
+          "S3AccessCreds": {
+            "type": "S3",
+            "roleName": {
+              "Ref": "InstanceRole"
+            },
+            "buckets": [
+              {
+                "Ref": "InformaticaSATSKeyS3Bucket"
+              }
+            ]
+          }
+        },
+        "AWS::CloudFormation::Init": {
+          "configSets": {
+            "InstallAndRun": [
+              "Install",
+              "Configure"
+            ]
+          },
+          "Install": {
+            "files": {
+              "/home/ec2-user/Mercury_Setup/replaceHostname.sh": {
+                "content": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "#!/bin/bash\n",
+                      "privateIp=$(curl http://169.254.169.254/latest/meta-data/local-ipv4) \n",
+                      "publicDnsName=$(curl http://169.254.169.254/latest/meta-data/public-hostname) \n",
+                      "hostname $publicDnsName \n",
+                      "sudo su -c \"sed --in-place '1s/.*/$publicDnsName/' /etc/hostname\" \n",
+                      "sudo su -c \"sed -i '$ a $privateIp $publicDnsName' /etc/hosts\" \n",
+                      "sudo su -c \"echo HOSTNAME=$publicDnsName >> /etc/sysconfig/network\" \n",
+                      "sudo su -c \"sed -i '$ a preserve_hostname: true' /etc/cloud/cloud.cfg\" \n",
+                      "#sudo rpm -e sats_analytics > /tmp/uba.txt 2>&1; sudo rpm -ivh /tmp/sats_analytics-3.0-811.x86_64.rpm\n",
+                      "etcHostsConfigOfCluster=\"",
+                      {
+                        "Fn::If": [
+                          "SingleNodeCnd",
+                          {
+                            "Fn::Join": [
+                              " ",
+                              [
+                                {
+                                  "Fn::GetAtt": [
+                                    "HadoopGateway",
+                                    "PrivateIp"
+                                  ]
+                                },
+                                {
+                                  "Fn::GetAtt": [
+                                    "HadoopGateway",
+                                    "PublicDnsName"
+                                  ]
+                                }
+                              ]
+                            ]
+                          },
+                          {
+                            "Fn::If": [
+                              "CreateLargeClusterCnd",
+                              {
+                                "Fn::Join": [
+                                  "\\\\\\n",
+                                  [
+                                    {
+                                      "Fn::Join": [
+                                        " ",
+                                        [
+                                          {
+                                            "Fn::GetAtt": [
+                                              "MultiNodeHadoopGateway",
+                                              "PrivateIp"
+                                            ]
+                                          },
+                                          {
+                                            "Fn::GetAtt": [
+                                              "MultiNodeHadoopGateway",
+                                              "PublicDnsName"
+                                            ]
+                                          }
+                                        ]
+                                      ]
+                                    },
+                                    {
+                                      "Fn::Join": [
+                                        " ",
+                                        [
+                                          {
+                                            "Fn::GetAtt": [
+                                              "MultiNodeHadoopNode2",
+                                              "PrivateIp"
+                                            ]
+                                          },
+                                          {
+                                            "Fn::GetAtt": [
+                                              "MultiNodeHadoopNode2",
+                                              "PublicDnsName"
+                                            ]
+                                          }
+                                        ]
+                                      ]
+                                    },
+                                    {
+                                      "Fn::Join": [
+                                        " ",
+                                        [
+                                          {
+                                            "Fn::GetAtt": [
+                                              "MultiNodeHadoopNode3",
+                                              "PrivateIp"
+                                            ]
+                                          },
+                                          {
+                                            "Fn::GetAtt": [
+                                              "MultiNodeHadoopNode3",
+                                              "PublicDnsName"
+                                            ]
+                                          }
+                                        ]
+                                      ]
+                                    },
+                                    {
+                                      "Fn::Join": [
+                                        " ",
+                                        [
+                                          {
+                                            "Fn::GetAtt": [
+                                              "MultiNodeHadoopNode4",
+                                              "PrivateIp"
+                                            ]
+                                          },
+                                          {
+                                            "Fn::GetAtt": [
+                                              "MultiNodeHadoopNode4",
+                                              "PublicDnsName"
+                                            ]
+                                          }
+                                        ]
+                                      ]
+                                    },
+                                    {
+                                      "Fn::Join": [
+                                        " ",
+                                        [
+                                          {
+                                            "Fn::GetAtt": [
+                                              "MultiNodeHadoopNode5",
+                                              "PrivateIp"
+                                            ]
+                                          },
+                                          {
+                                            "Fn::GetAtt": [
+                                              "MultiNodeHadoopNode5",
+                                              "PublicDnsName"
+                                            ]
+                                          }
+                                        ]
+                                      ]
+                                    },
+                                    {
+                                      "Fn::Join": [
+                                        " ",
+                                        [
+                                          {
+                                            "Fn::GetAtt": [
+                                              "MultiNodeHadoopNode6",
+                                              "PrivateIp"
+                                            ]
+                                          },
+                                          {
+                                            "Fn::GetAtt": [
+                                              "MultiNodeHadoopNode6",
+                                              "PublicDnsName"
+                                            ]
+                                          }
+                                        ]
+                                      ]
+                                    }
+                                  ]
+                                ]
+                              },
+                              {
+                                "Fn::Join": [
+                                  "\\\\\\n",
+                                  [
+                                    {
+                                      "Fn::Join": [
+                                        " ",
+                                        [
+                                          {
+                                            "Fn::GetAtt": [
+                                              "MultiNodeHadoopGateway",
+                                              "PrivateIp"
+                                            ]
+                                          },
+                                          {
+                                            "Fn::GetAtt": [
+                                              "MultiNodeHadoopGateway",
+                                              "PublicDnsName"
+                                            ]
+                                          }
+                                        ]
+                                      ]
+                                    },
+                                    {
+                                      "Fn::Join": [
+                                        " ",
+                                        [
+                                          {
+                                            "Fn::GetAtt": [
+                                              "MultiNodeHadoopNode2",
+                                              "PrivateIp"
+                                            ]
+                                          },
+                                          {
+                                            "Fn::GetAtt": [
+                                              "MultiNodeHadoopNode2",
+                                              "PublicDnsName"
+                                            ]
+                                          }
+                                        ]
+                                      ]
+                                    },
+                                    {
+                                      "Fn::Join": [
+                                        " ",
+                                        [
+                                          {
+                                            "Fn::GetAtt": [
+                                              "MultiNodeHadoopNode3",
+                                              "PrivateIp"
+                                            ]
+                                          },
+                                          {
+                                            "Fn::GetAtt": [
+                                              "MultiNodeHadoopNode3",
+                                              "PublicDnsName"
+                                            ]
+                                          }
+                                        ]
+                                      ]
+                                    }
+                                  ]
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      "\"\n",
+                      "sudo su -c \"echo -e $etcHostsConfigOfCluster >> /etc/hosts\" \n",
+                      {
+                        "Fn::If": [
+                          "SingleNodeCnd",
+                          {
+                            "Fn::Join": [
+                              "",
+                              [
+                                "sudo ssh -o StrictHostKeyChecking=no -o PasswordAuthentication=no ",
+                                {
+                                  "Fn::GetAtt": [
+                                    "HadoopGateway",
+                                    "PublicDnsName"
+                                  ]
+                                },
+                                " \"sudo su -c 'echo -e $etcHostsConfigOfCluster >> /etc/hosts'\" \n"
+                              ]
+                            ]
+                          },
+                          {
+                            "Fn::If": [
+                              "CreateLargeClusterCnd",
+                              {
+                                "Fn::Join": [
+                                  "",
+                                  [
+                                    "sudo ssh -o StrictHostKeyChecking=no -o PasswordAuthentication=no ",
+                                    {
+                                      "Fn::GetAtt": [
+                                        "MultiNodeHadoopGateway",
+                                        "PublicDnsName"
+                                      ]
+                                    },
+                                    " \"sudo su -c 'echo -e $etcHostsConfigOfCluster >> /etc/hosts'\" \n",
+                                    "sudo ssh -o StrictHostKeyChecking=no -o PasswordAuthentication=no ",
+                                    {
+                                      "Fn::GetAtt": [
+                                        "MultiNodeHadoopNode2",
+                                        "PublicDnsName"
+                                      ]
+                                    },
+                                    " \"sudo su -c  'echo -e $etcHostsConfigOfCluster >> /etc/hosts'\" \n",
+                                    "sudo ssh -o StrictHostKeyChecking=no -o PasswordAuthentication=no ",
+                                    {
+                                      "Fn::GetAtt": [
+                                        "MultiNodeHadoopNode3",
+                                        "PublicDnsName"
+                                      ]
+                                    },
+                                    " \"sudo su -c  'echo -e $etcHostsConfigOfCluster >>  /etc/hosts'\" \n",
+                                    "sudo ssh -o StrictHostKeyChecking=no -o PasswordAuthentication=no ",
+                                    {
+                                      "Fn::GetAtt": [
+                                        "MultiNodeHadoopNode4",
+                                        "PublicDnsName"
+                                      ]
+                                    },
+                                    " \"sudo su -c  'echo -e $etcHostsConfigOfCluster >> /etc/hosts'\" \n",
+                                    "sudo ssh -o StrictHostKeyChecking=no -o PasswordAuthentication=no ",
+                                    {
+                                      "Fn::GetAtt": [
+                                        "MultiNodeHadoopNode5",
+                                        "PublicDnsName"
+                                      ]
+                                    },
+                                    " \"sudo su -c  'echo -e $etcHostsConfigOfCluster >> /etc/hosts'\" \n",
+                                    "sudo ssh -o StrictHostKeyChecking=no -o PasswordAuthentication=no ",
+                                    {
+                                      "Fn::GetAtt": [
+                                        "MultiNodeHadoopNode6",
+                                        "PublicDnsName"
+                                      ]
+                                    },
+                                    " \"sudo su -c  'echo -e $etcHostsConfigOfCluster >> /etc/hosts'\" \n"
+                                  ]
+                                ]
+                              },
+                              {
+                                "Fn::Join": [
+                                  "",
+                                  [
+                                    "sudo ssh -o StrictHostKeyChecking=no -o PasswordAuthentication=no ",
+                                    {
+                                      "Fn::GetAtt": [
+                                        "MultiNodeHadoopGateway",
+                                        "PublicDnsName"
+                                      ]
+                                    },
+                                    " \"sudo su -c 'echo -e $etcHostsConfigOfCluster >> /etc/hosts'\" \n",
+                                    "sudo ssh -o StrictHostKeyChecking=no -o PasswordAuthentication=no ",
+                                    {
+                                      "Fn::GetAtt": [
+                                        "MultiNodeHadoopNode2",
+                                        "PublicDnsName"
+                                      ]
+                                    },
+                                    " \"sudo su -c  'echo -e $etcHostsConfigOfCluster >> /etc/hosts'\" \n",
+                                    "sudo ssh -o StrictHostKeyChecking=no -o PasswordAuthentication=no ",
+                                    {
+                                      "Fn::GetAtt": [
+                                        "MultiNodeHadoopNode3",
+                                        "PublicDnsName"
+                                      ]
+                                    },
+                                    " \"sudo su -c  'echo -e $etcHostsConfigOfCluster >>  /etc/hosts'\" \n"
+                                  ]
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  ]
+                },
+                "mode": "000770",
+                "owner": "ec2-user",
+                "group": "ec2-user"
+              },
+              "/home/ec2-user/Mercury_Setup/replaceValues.sh": {
+                "content": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "#!/bin/bash\n",
+                      "THISHOST=$(hostname -f)\n",
+                      "sed -i -e ",
+                      {
+                        "Fn::Join": [
+                          "",
+                          [
+                            "\"s/DomainHostValue/$THISHOST/g\"",
+                            " /home/ec2-user/Mercury_Setup/config_template.xml\n"
+                          ]
+                        ]
+                      },
+                      "sed -i -e 's/domainname/Domain/g' /home/ec2-user/Mercury_Setup/config_template.xml\n",
+                      "sed -i -e 's/nodename/Node/g' /home/ec2-user/Mercury_Setup/config_template.xml\n",
+                      "sed -i -e 's/licensename/License/g' /home/ec2-user/Mercury_Setup/config_template.xml\n",
+                      "sed -i -e 's/adminusername/",
+                      {
+                        "Ref": "InformaticaAdminUsername"
+                      },
+                      "/g' /home/ec2-user/Mercury_Setup/config_template.xml\n",
+                      "sed -i -e 's/adminpassword/",
+                      {
+                        "Ref": "InformaticaAdminPassword"
+                      },
+                      "/g' /home/ec2-user/Mercury_Setup/config_template.xml\n",
+                      "sed -i -e 's/dbtypevalue/MSSQLServer/g' /home/ec2-user/Mercury_Setup/config_template.xml\n",
+                      "sed -i -e 's/dbloginvalue/",
+                      {
+                        "Ref": "DBUser"
+                      },
+                      "/g' /home/ec2-user/Mercury_Setup/config_template.xml\n",
+                      "sed -i -e 's/dbpasswordvalue/",
+                      {
+                        "Ref": "DBPassword"
+                      },
+                      "/g' /home/ec2-user/Mercury_Setup/config_template.xml\n",
+                      "sed -i -e 's/dbhostname/",
+                      {
+                        "Fn::GetAtt": [
+                          "InfaDB",
+                          "Endpoint.Address"
+                        ]
+                      },
+                      "/g' /home/ec2-user/Mercury_Setup/config_template.xml\n",
+                      "sed -i -e 's/dbportvalue/1433/g' /home/ec2-user/Mercury_Setup/config_template.xml\n",
+                      "sed -i -e 's/dbservicenamevalue/infadb/g' /home/ec2-user/Mercury_Setup/config_template.xml\n",
+                      "sed -i -e 's/mrsservicename/infamrsdb/g' /home/ec2-user/Mercury_Setup/config_template.xml\n",
+                      "sed -i -e 's/cmsdbtype/SQLServer/g' /home/ec2-user/Mercury_Setup/config_template.xml\n",
+                      "sed -i -e 's/cmsdbname/infacmsdb/g' /home/ec2-user/Mercury_Setup/config_template.xml\n",
+                      "sed -i -e 's/pwhdbname/infapwhdb/g' /home/ec2-user/Mercury_Setup/config_template.xml\n",
+                      "sed -i -e 's/hadoopgatewayhost/",
+                      {
+                        "Fn::If": [
+                          "SingleNodeCnd",
+                          {
+                            "Fn::GetAtt": [
+                              "HadoopGateway",
+                              "PublicDnsName"
+                            ]
+                          },
+                          {
+                            "Fn::GetAtt": [
+                              "MultiNodeHadoopGateway",
+                              "PublicDnsName"
+                            ]
+                          }
+                        ]
+                      },
+                      "/g'  /home/ec2-user/Mercury_Setup/config_template.xml\n",
+                      "sed -i -e 's/hadoopnodes/",
+                      {
+                        "Fn::If": [
+                          "SingleNodeCnd",
+                          {
+                            "Fn::GetAtt": [
+                              "HadoopGateway",
+                              "PublicDnsName"
+                            ]
+                          },
+                          {
+                            "Fn::If": [
+                              "CreateLargeClusterCnd",
+                              {
+                                "Fn::Join": [
+                                  ",",
+                                  [
+                                    {
+                                      "Fn::GetAtt": [
+                                        "MultiNodeHadoopGateway",
+                                        "PublicDnsName"
+                                      ]
+                                    },
+                                    {
+                                      "Fn::GetAtt": [
+                                        "MultiNodeHadoopNode2",
+                                        "PublicDnsName"
+                                      ]
+                                    },
+                                    {
+                                      "Fn::GetAtt": [
+                                        "MultiNodeHadoopNode3",
+                                        "PublicDnsName"
+                                      ]
+                                    },
+                                    {
+                                      "Fn::GetAtt": [
+                                        "MultiNodeHadoopNode4",
+                                        "PublicDnsName"
+                                      ]
+                                    },
+                                    {
+                                      "Fn::GetAtt": [
+                                        "MultiNodeHadoopNode5",
+                                        "PublicDnsName"
+                                      ]
+                                    },
+                                    {
+                                      "Fn::GetAtt": [
+                                        "MultiNodeHadoopNode6",
+                                        "PublicDnsName"
+                                      ]
+                                    }
+                                  ]
+                                ]
+                              },
+                              {
+                                "Fn::Join": [
+                                  ",",
+                                  [
+                                    {
+                                      "Fn::GetAtt": [
+                                        "MultiNodeHadoopGateway",
+                                        "PublicDnsName"
+                                      ]
+                                    },
+                                    {
+                                      "Fn::GetAtt": [
+                                        "MultiNodeHadoopNode2",
+                                        "PublicDnsName"
+                                      ]
+                                    },
+                                    {
+                                      "Fn::GetAtt": [
+                                        "MultiNodeHadoopNode3",
+                                        "PublicDnsName"
+                                      ]
+                                    }
+                                  ]
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      "/g'  /home/ec2-user/Mercury_Setup/config_template.xml\n",
+                      "sed -i -e 's/ldmloadtype/",
+                      {
+                        "Fn::If": [
+                          "SingleNodeCnd",
+                          "low",
+                          {
+                            "Fn::If": [
+                              "CreateLargeClusterCnd",
+                              "high",
+                              "medium"
+                            ]
+                          }
+                        ]
+                      },
+                      "/g' /home/ec2-user/Mercury_Setup/config_template.xml\n",
+                      "sed -i -e 's/repocontentcreatetimeout/1200000/g' /home/ec2-user/Mercury_Setup/config_template.xml\n",
+                      "sed -i -e 's/importsampledata/",
+                      {
+                        "Fn::If": [
+                          "ImportSampleCnd",
+                          "true",
+                          "false"
+                        ]
+                      },
+                      "/g'  /home/ec2-user/Mercury_Setup/config_template.xml\n"
+                    ]
+                  ]
+                },
+                "mode": "000700",
+                "owner": "ec2-user",
+                "group": "ec2-user"
+              },
+              "/home/ec2-user/Mercury_Setup/launchAnalystService.sh": {
+                "content": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "#!/bin/bash\n",
+                      "administratorName=",
+                      {
+                        "Ref": "InformaticaAdminUsername"
+                      },
+                      "\n",
+                      "administratorPassword=",
+                      {
+                        "Ref": "InformaticaAdminPassword"
+                      },
+                      "\n",
+                      "echo /opt/informatica/isp/bin/infacmd.sh as createService -dn Domain -nn Node -sn Analyst_Service -un $administratorName -pd $administratorPassword -rs Model_Repository_Service -ds Data_Integration_Service -ffl /tmp -cs Catalog_Service -csau $administratorName -csap $administratorPassword -au $administratorName -ap $administratorPassword -bgefd /tmp -HttpPort 8089 >> /installation.log \n",
+                      "/opt/informatica/isp/bin/infacmd.sh as createService -dn Domain -nn Node -sn Analyst_Service -un $administratorName -pd $administratorPassword -rs Model_Repository_Service -ds Data_Integration_Service -ffl /tmp -cs Catalog_Service -csau $administratorName -csap $administratorPassword -au $administratorName -ap $administratorPassword -bgefd /tmp -HttpPort 8089 >> /installation.log 2>&1 \n",
+                      "echo /opt/informatica/isp/bin/infacmd.sh assignLicense -dn Domain -un $administratorName -pd $administratorPassword -ln License -sn Analyst_Service >> /installation.log \n",
+                      "/opt/informatica/isp/bin/infacmd.sh assignLicense -dn Domain -un $administratorName -pd $administratorPassword -ln License -sn Analyst_Service >> /installation.log 2>&1 \n",
+                      "echo /opt/informatica/isp/bin/infacmd.sh as updateServiceOptions -dn Domain -sn Analyst_Service -un $administratorName -pd $administratorPassword  -o BGExport.BGPermanentAttachmentFileLocation=/tmp >> /installation.log \n",
+                      "/opt/informatica/isp/bin/infacmd.sh as updateServiceOptions -dn Domain -sn Analyst_Service -un $administratorName -pd $administratorPassword  -o BGExport.BGPermanentAttachmentFileLocation=/tmp >> /installation.log 2>&1 \n",
+                      "echo /opt/informatica/isp/bin/infacmd.sh enableService -dn Domain -un $administratorName -pd $administratorPassword -sn Analyst_Service >> /installation.log \n",
+                      "/opt/informatica/isp/bin/infacmd.sh enableService -dn Domain -un $administratorName -pd $administratorPassword -sn Analyst_Service >> /installation.log 2>&1 \n"
+                    ]
+                  ]
+                },
+                "mode": "000770",
+                "owner": "ec2-user",
+                "group": "ec2-user"
+              },
+              "/home/ec2-user/Mercury_Setup/launchVDSService.sh": {
+                "content": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "#!/bin/bash\n",
+                      "administratorName=",
+                      {
+                        "Ref": "InformaticaAdminUsername"
+                      },
+                      "\n",
+                      "administratorPassword=",
+                      {
+                        "Ref": "InformaticaAdminPassword"
+                      },
+                      "\n",
+                      "sudo /opt/informatica/isp/bin/infacmd.sh  ihs updateServiceOptions -dn Domain -un $administratorName -pd $administratorPassword -o HadoopServicesProperties.yarn_nodemanager_resource_memory_mb=100000 -sn Informatica_Cluster_Service \n",
+                      "sudo /opt/informatica/isp/bin/infacmd.sh  ldm updateServiceOptions -dn Domain -un $administratorName -pd $administratorPassword -o LdmCustomOptions.ingest.enable.propagation=false -sn Catalog_Service \n",
+                      "cd /home/ec2-user/sats \n",
+                      "sudo sed -i \"s/10\\.1\\.1/10\\.0\\.0/g\" /opt/informatica/version.txt; \n",
+                      "privateIp=$(curl http://169.254.169.254/latest/meta-data/local-ipv4); \n",
+                      "sed -i \"s/network_interface/$privateIp/g\" /home/ec2-user/sats/VDS/SilentInput.properties; \n",
+                      "hadoop_ip=`grep \"etcHostsConfigOfCluster=\" /home/ec2-user/Mercury_Setup/replaceHostname.sh | cut -d'=' -f2 | sed -e 's/\"//g' | cut -d' ' -f1`;\n",
+                      "sed -i \"s/zookeeper_url/$hadoop_ip:2181/g\" /home/ec2-user/sats/VDS/SilentInput.properties; \n",
+                      "echo \"context transport_tcp_port_high 14490\" >> /opt/informatica/admind/config/umestored.cfg \n",
+                      "echo \"context transport_tcp_port_low  14371\" >> /opt/informatica/admind/config/umestored.cfg \n",
+                      "echo \"context transport_tcp_maximum_ports 10\" >> /opt/informatica/admind/config/umestored.cfg \n",
+                      "echo \"source transport_tcp_reuseaddr 1\" >> /opt/informatica/admind/config/umestored.cfg \n",
+                      "cd /home/ec2-user/sats/VDS/;sudo /home/ec2-user/sats/VDS/silentinstall.sh; \n",
+                      "#cd /home/ec2-user/sats/VDS_EBF/ebf; \n",
+                      "#sudo ./installEBF.sh; \n",
+                      "export HOSTNAME=`cat /etc/hostname` \n",
+                      "sudo /opt/informatica/tomcat/bin/infaservice.sh shutdown; \n",
+                      "sudo sleep 3m; \n",
+                      "sudo /opt/informatica/tomcat/bin/infaservice.sh startup; \n",
+                      "sudo sleep 5m; \n",
+                      "sudo /opt/informatica/isp/bin/infacmd.sh disableservice -dn Domain -un $administratorName -pd $administratorPassword -sdn Native  -sn _AdminConsole -mo Stop; \n",
+                      "sudo sleep 1m; \n",
+                      "sudo /opt/informatica/isp/bin/infacmd.sh enableservice -dn Domain -un $administratorName -pd $administratorPassword -sdn Native  -sn _AdminConsole; \n",
+                      "sudo sleep 30; \n",
+                      "sudo /opt/informatica/admind/bin/admin.sh start; \n",
+                      "sudo /opt/informatica/node/bin/node.sh start; \n",
+                      "sudo sleep 40; \n",
+                      "sudo /opt/informatica/isp/bin/infacmd.sh vds createService -dn Domain -nn Node -un $administratorName -pd $administratorPassword -sn Vibe_Data_Stream_Service -dt SQLSERVER -du ",
+                      {
+                        "Ref": "DBUser"
+                      },
+                      " -dp ",
+                      {
+                        "Ref": "DBPassword"
+                      },
+                      " -dl 'jdbc:informatica:sqlserver://",
+                      {
+                        "Fn::GetAtt": [
+                          "InfaDB",
+                          "Endpoint.Address"
+                        ]
+                      },
+                      ":1433;SelectMethod=cursor;databaseName=infavdsdb' -lsn License; \n"
+                    ]
+                  ]
+                },
+                "mode": "000770",
+                "owner": "ec2-user",
+                "group": "ec2-user"
+              },
+              "/home/ec2-user/Mercury_Setup/launchSATSService.sh": {
+                "content": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "#!/bin/bash\n",
+                      "administratorName=",
+                      {
+                        "Ref": "InformaticaAdminUsername"
+                      },
+                      "\n",
+                      "administratorPassword=",
+                      {
+                        "Ref": "InformaticaAdminPassword"
+                      },
+                      "\n",
+                      "cd /home/ec2-user/sats/SATS/;\n",
+                      "license_file=license.txt_`hostname -f` \n",
+                      "curl http://169.254.169.254/latest/dynamic/instance-identity/document > $license_file \n",
+                      "echo \"=====================================\" >> $license_file \n",
+                      "sudo /opt/informatica/isp/bin/infacmd.sh showLicense -dn Domain -un $administratorName -pd $administratorPassword -ln License >> $license_file \n",
+                      "bucket=sats-phonehome \n",
+                      "resource=\"/${bucket}/${license_file}\" \n",
+                      "contentType=\"text/plain\" \n",
+                      "dateValue=`date -R` \n",
+                      "curl -L -X PUT -T \"${license_file}\" -H \"Host: ${bucket}.s3.amazonaws.com\"  -H \"Date: ${dateValue}\" -H \"Content-Type: ${contentType}\" https://${bucket}.s3.amazonaws.com/${license_file} \n",
+
+                      "export HOSTNAME=`cat /etc/hostname` \n",
+                      "sudo sh  /home/ec2-user/sats/SATS/silentinstall.sh > /tmp/sats.txt 2>&1 & ",
+                      "\n",
+                      "install_pid=$! \n",
+                      "sudo sleep 5m; \n",
+                      "sudo pkill -TERM -P $install_pid \n",
+                      "sudo /home/ec2-user/sats/SATS_EBF/installEBF.sh \n",
+                      "cd /opt/informatica/services/AdministratorConsole/webapps; sudo rm -rf adminconsole administrator monitoring ows ROOT; cd -;",
+                      "sudo /opt/informatica/isp/bin/infacmd.sh disableservice -dn Domain -un $administratorName -pd $administratorPassword -sdn Native  -sn _AdminConsole -mo Stop; \n",
+                      "sudo sleep 1m; \n",
+                      "sudo /opt/informatica/isp/bin/infacmd.sh enableservice -dn Domain -un $administratorName -pd $administratorPassword -sdn Native  -sn _AdminConsole; \n",
+                      "sudo sleep 30; \n",
+                      "sudo /opt/informatica/isp/bin/infacmd.sh sats createService -dn Domain -nn Node -un $administratorName -pd $administratorPassword -sn SecureAtSource_Service -dt SQLSERVER -du ",
+                      {
+                        "Ref": "DBUser"
+                      },
+                      " -dp ",
+                      {
+                        "Ref": "DBPassword"
+                      },
+                      " -dl 'jdbc:informatica:sqlserver://",
+                      {
+                        "Fn::GetAtt": [
+                          "InfaDB",
+                          "Endpoint.Address"
+                        ]
+                      },
+                      ":1433;SelectMethod=cursor;databaseName=infasatsdb'  -csn Catalog_Service -csun $administratorName -cspd $administratorPassword -bsn Vibe_Data_Stream_Service -bsun $administratorName -bspd $administratorPassword -HttpPort 6200 -ll DEBUG; \n",
+                      "sudo /opt/informatica/isp/bin/infacmd.sh assignLicense -dn Domain -un $administratorName -pd $administratorPassword -ln License -sn SecureAtSource_Service; \n",
+                      "RET=1 \n",
+                      "COUNTER=0 \n",
+                      "while [[ $RET -ne 0 && $COUNTER -lt 3 ]]; do echo \"Running create contents\"; ((++COUNTER)); sudo /opt/informatica/isp/bin/infacmd.sh sats createContents -dn Domain -sdn Native -un $administratorName -pd $administratorPassword -sn SecureAtSource_Service; RET=$?;sleep 100; done \n",               
+                      "sudo /opt/informatica/isp/bin/infacmd.sh enableService -dn Domain -sdn Native -un $administratorName -pd $administratorPassword -sn SecureAtSource_Service; \n"
+                    ]
+                  ]
+                },
+                "mode": "000770",
+                "owner": "ec2-user",
+                "group": "ec2-user"
+              },
+              "/mnt1/EICLicense.key": {
+                "source": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "https://",
+                      {
+                        "Ref": "InformaticaSATSKeyS3Bucket"
+                      },
+                      ".s3.amazonaws.com/",
+                      {
+                        "Ref": "InformaticaSATSKeyName"
+                      }
+                    ]
+                  ]
+                },
+                "mode": "000400",
+                "owner": "ec2-user",
+                "group": "ec2-user",
+                "authentication": "S3AccessCreds"
+              }
+            }
+          },
+          "Configure": {
+            "commands": {
+              "01_ReplaceHostname": {
+                "command": "sudo /home/ec2-user/Mercury_Setup/replaceHostname.sh"
+              },
+              "02_ReplaceValues": {
+                "command": "sudo /home/ec2-user/Mercury_Setup/replaceValues.sh"
+              },
+              "03_DatabaseCreation": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "sudo java -cp /home/ec2-user/mssqlutil/MSSQLUtility.jar:/home/ec2-user/mssqlutil/com.informatica.datadirect-dwsqlserver-5.1.4_B.jar mssqlutil/MSSQLUtility jdbc:informatica:sqlserver://",
+                      {
+                        "Fn::GetAtt": [
+                          "InfaDB",
+                          "Endpoint.Address"
+                        ]
+                      },
+                      ":1433 ",
+                      {
+                        "Ref": "DBUser"
+                      },
+                      " ",
+                      {
+                        "Ref": "DBPassword"
+                      },
+                      " infadb ",
+                      "infamrsdb ",
+                      "infacmsdb ",
+                      "infapwhdb ",
+                      "infavdsdb ",
+                      "infasatsdb "
+                    ]
+                  ]
+                }
+              },
+              "04_MercurySetup": {
+                "command": "sudo java -jar /home/ec2-user/Mercury_Setup/mercury_setup.jar -cf /home/ec2-user/Mercury_Setup/config_template.xml -s -uei"
+              },
+              "05_AnalystServiceSetup": {
+                "command": "sudo /home/ec2-user/Mercury_Setup/launchAnalystService.sh"
+              },
+              "06_VDSServiceSetup": {
+                "command": "sudo /home/ec2-user/Mercury_Setup/launchVDSService.sh"
+              },
+              "07_SATSServiceSetup": {
+                "command": "sudo /home/ec2-user/Mercury_Setup/launchSATSService.sh"
+              }
+            }
+          }
+        }
+      },
+      "Properties": {
+        "IamInstanceProfile": {
+          "Ref": "InstanceProfile"
+        },
+        "ImageId": {
+          "Fn::FindInMap": [
+            "AWSAMIRegionMap",
+            {
+              "Ref": "AWS::Region"
+            },
+            "INFASATSADMINHVM"
+          ]
+        },
+        "InstanceType": {
+          "Ref": "InformaticaServerInstanceType"
+        },
+        "KeyName": {
+          "Ref": "KeyName"
+        },
+        "InstanceInitiatedShutdownBehavior": "stop",
+        "NetworkInterfaces": [
+          {
+            "NetworkInterfaceId": {
+              "Ref": "AdministrationServerNetInterface"
+            },
+            "DeviceIndex": "0"
+          }
+        ],
+        "Tags": [
+          {
+            "Key": "NAME",
+            "Value": {
+              "Fn::Join": [
+                "",
+                [
+                  "InformaticaDomain-",
+                  {
+                    "Ref": "AWS::StackName"
+                  }
+                ]
+              ]
+            }
+          }
+        ],
+        "UserData": {
+          "Fn::Base64": {
+            "Fn::Join": [
+              "",
+              [
+                "#!/bin/bash\n",
+                "sudo yum update -y aws-cfn-bootstrap\n",
+                "# Install the files and packages from the metadata\n",
+                "/opt/aws/bin/cfn-init -v ",
+                "         --stack ",
+                {
+                  "Ref": "AWS::StackName"
+                },
+                "         --resource AdministrationServer ",
+                "         --configsets InstallAndRun ",
+                "         --region ",
+                {
+                  "Ref": "AWS::Region"
+                },
+                "\n",
+                "# Signal the status from cfn-init\n",
+                "/opt/aws/bin/cfn-signal -e $? ",
+                " --stack ",
+                {
+                  "Ref": "AWS::StackName"
+                },
+                " --resource AdministrationServer ",
+                " --region ",
+                {
+                  "Ref": "AWS::Region"
+                },
+                "\n"
+              ]
+            ]
+          }
+        }
+      },
+      "CreationPolicy": {
+        "ResourceSignal": {
+          "Timeout": "PT2H55M"
+        }
+      },
+      "DependsOn": [
+        "InfaDB",
+        "HadoopGateway",
+        "AdministrationServerNetInterface"
+      ]
+    }
+  },
+  "Outputs": {
+    "InstanceID": {
+      "Description": "Informatica Domain Host Name",
+      "Value": {
+        "Ref": "AdministrationServer"
+      }
+    },
+    "InformaticaAdminConsoleURL": {
+      "Description": "Informatica Administrator Console",
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "http://",
+            {
+              "Fn::GetAtt": [
+                "AdministrationServer",
+                "PublicDnsName"
+              ]
+            },
+            ":6008"
+          ]
+        ]
+      }
+    },
+    "InformaticaSecureAtSourceURL": {
+      "Description": "Informatica SecureAtSource",
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "http://",
+            {
+              "Fn::GetAtt": [
+                "AdministrationServer",
+                "PublicDnsName"
+              ]
+            },
+            ":6200"
+          ]
+        ]
+      }
+    },
+    "ICSSingleNodeClusterURL": {
+      "Description": "ICS Hadoop Gateway node",
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "http://",
+            {
+              "Fn::GetAtt": [
+                "HadoopGateway",
+                "PublicDnsName"
+              ]
+            },
+            ":8080"
+          ]
+        ]
+      },
+      "Condition": "SingleNodeCnd"
+    },
+    "ICSMultiNodeClusterURL": {
+      "Description": "ICS Hadoop Gateway node",
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "http://",
+            {
+              "Fn::GetAtt": [
+                "MultiNodeHadoopGateway",
+                "PublicDnsName"
+              ]
+            },
+            ":8080"
+          ]
+        ]
+      },
+      "Condition": "MultipleNodeCnd"
+    },
+    "InformaticaAdminConsoleServerLogs": {
+      "Description": "Informatica Domain Installation Log Location",
+      "Value": "/installation.log"
+    },
+    "InstanceSetupLogs": {
+      "Description": "Informatica Domain EC2 Instance setup Log Location",
+      "Value": "/var/log/cfn-init-cmd.log"
+    }
+  }
+}
