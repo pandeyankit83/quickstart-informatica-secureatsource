@@ -1,170 +1,6 @@
 {
     "AWSTemplateFormatVersion": "2010-09-09",
     "Description": "Informatica Secure@Source. This template creates Amazon EC2 instances, Elastic IPs and related resources. You will be billed for the AWS resources used if you create a stack from this template.",
-    "Parameters": {
-        "KeyName": {
-            "Description": "Name of an existing Amazon EC2 keypair. You must specify this option to enable SSH access to Informatica domain and cluster instances",
-            "Type": "AWS::EC2::KeyPair::KeyName"
-        },
-        "VPCID": {
-            "Description": "ID of your existing VPC where you want to deploy Secure@Source",
-            "Type": "AWS::EC2::VPC::Id"
-        },
-        "InformaticaSATSKeyS3Bucket": {
-            "Type": "String",
-            "Description": "Name of the Amazon S3 bucket in your account that contains the Informatica Secure@Source Key"
-        },
-        "InformaticaSATSKeyName": {
-            "Type": "String",
-            "Description": "The Informatica Secure@Source license key name. For example, <license key name> or <bucket sub folder/license key name>"
-        },
-        "InformaticaAdminUsername": {
-            "Description": "Username to access Informatica Administrator",
-            "Type": "String"
-        },
-        "InformaticaAdminPassword": {
-            "Description": "Password to access Informatica Administrator",
-            "Type": "String",
-            "NoEcho": "True"
-        },
-        "InformaticaServerSubnetID": {
-            "Description": "Select a publicly accessible subnet ID for the Informatica domain",
-            "Type": "AWS::EC2::Subnet::Id"
-        },
-        "InformaticaServerInstanceType": {
-            "Type": "String",
-            "Default": "c4.4xlarge",
-            "AllowedValues": [
-                "c4.4xlarge",
-                "c4.8xlarge"
-            ],
-            "Description": "The EC2 instance type for the instance that hosts the Informatica domain. Default is c4.4xlarge"
-        },
-        "DBUser": {
-            "Description": "Username for the database instance associated with Informatica domain and services (such as Model Repository Service, Data Integration Service, Content Management Service)",
-            "Type": "String",
-            "MinLength": "8",
-            "MaxLength": "18"
-        },
-        "DBPassword": {
-            "Description": "Password for the database instance associated with Informatica domain and services (such as Model Repository Service, Data Integration Service, Content Management Service)",
-            "Type": "String",
-            "NoEcho": "True",
-            "MinLength": "8",
-            "MaxLength": "18"
-        },
-        "DBSubnetIDs": {
-            "Description": "IDs of two private subnets in the selected VPC. These must be in different Availability Zones in the selected VPC",
-            "Type": "List<AWS::EC2::Subnet::Id>"
-        },
-        "ICSClusterSize": {
-            "Type": "String",
-            "Default": "Small",
-            "AllowedValues": [
-                "Small",
-                "Medium",
-                "Large"
-            ],
-            "Description": "The cluster size (i.) Small (c4.8xlarge, single node) (ii.) Medium (c4.8xlarge, three nodes) (iii.)  Large (c4.8xlarge, six nodes)"
-        },
-        "QSS3BucketName": {
-            "AllowedPattern": "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$",
-            "ConstraintDescription": "Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-).",
-            "Default": "quickstart-reference",
-            "Description": "S3 bucket name for the Quick Start assets. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-).",
-            "Type": "String"
-        },
-        "QSS3KeyPrefix": {
-            "AllowedPattern": "^[0-9a-zA-Z-]+(/[0-9a-zA-Z-]+)*$",
-            "ConstraintDescription": "Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/). It cannot start or end with forward slash (/) because they are automatically appended.",
-            "Default": "informatica/sats/latest",
-            "Description": "S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/). It cannot start or end with forward slash (/) because they are automatically appended.",
-            "Type": "String"
-        },
-        "IPAddressRange": {
-            "Description": "The CIDR IP range that is permitted to access the Informatica domain and the Informatica embedded cluster",
-            "Type": "String",
-            "MinLength": "9",
-            "MaxLength": "18",
-            "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
-            "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
-        },
-        "ImportSampleData": {
-            "Type": "String",
-            "Default": "Yes",
-            "AllowedValues": [
-                "Yes",
-                "No"
-            ],
-            "Description": "Select Yes to import the sample catalog data. You can use the sample data to get started with the product"
-        }
-    },
-    "Conditions": {
-        "SingleNodeCnd": {
-            "Fn::Equals": [
-                {
-                    "Ref": "ICSClusterSize"
-                },
-                "Small"
-            ]
-        },
-        "CreateMediumClusterCnd": {
-            "Fn::Equals": [
-                {
-                    "Ref": "ICSClusterSize"
-                },
-                "Medium"
-            ]
-        },
-        "CreateLargeClusterCnd": {
-            "Fn::Equals": [
-                {
-                    "Ref": "ICSClusterSize"
-                },
-                "Large"
-            ]
-        },
-        "MultipleNodeCnd": {
-            "Fn::Or": [
-                {
-                    "Condition": "CreateMediumClusterCnd"
-                },
-                {
-                    "Condition": "CreateLargeClusterCnd"
-                }
-            ]
-        },
-        "ImportSampleCnd": {
-            "Fn::Equals": [
-                {
-                    "Ref": "ImportSampleData"
-                },
-                "Yes"
-            ]
-        },
-        "SupportMultiAZCnd": {
-            "Fn::Equals": [
-                {
-                    "Fn::FindInMap": [
-                        "MultiAZRegionMapping",
-                        {
-                            "Ref": "AWS::Region"
-                        },
-                        "Supporting"
-                    ]
-                },
-                "YES"
-            ]
-        },
-        "DoNotSupportDbM4Class": {
-            "Fn::Equals": [
-                {
-                    "Ref": "AWS::Region"
-                },
-                "sa-east-1"
-            ]
-        }
-    },
     "Metadata": {
         "AWS::CloudFormation::Interface": {
             "ParameterGroups": [
@@ -212,49 +48,147 @@
                 }
             ],
             "ParameterLabels": {
-                "VPCID": {
-                    "default": "VPC"
-                },
-                "InformaticaServerInstanceType": {
-                    "default": "Informatica Domain Instance Type"
-                },
-                "InformaticaAdminUsername": {
-                    "default": "Informatica Administrator Username"
-                },
-                "InformaticaAdminPassword": {
-                    "default": "Informatica Administrator Password"
-                },
-                "InformaticaSATSKeyS3Bucket": {
-                    "default": "Secure@Source License Key Location"
-                },
-                "InformaticaSATSKeyName": {
-                    "default": "Secure@Source License Key Name"
-                },
-                "InformaticaServerSubnetID": {
-                    "default": "Informatica Domain Subnet"
-                },
-                "DBUser": {
-                    "default": "Informatica Database Instance Username"
-                },
                 "DBPassword": {
                     "default": "Informatica Database Instance Password"
                 },
                 "DBSubnetIDs": {
                     "default": "Informatica Database Subnets"
                 },
+                "DBUser": {
+                    "default": "Informatica Database Instance Username"
+                },
                 "ICSClusterSize": {
                     "default": "Informatica Embedded Cluster Size"
-                },
-                "ImportSampleData": {
-                    "default": "Import Sample Content"
                 },
                 "IPAddressRange": {
                     "default": "IP Address Range"
                 },
+                "ImportSampleData": {
+                    "default": "Import Sample Content"
+                },
+                "InformaticaAdminPassword": {
+                    "default": "Informatica Administrator Password"
+                },
+                "InformaticaAdminUsername": {
+                    "default": "Informatica Administrator Username"
+                },
+                "InformaticaSATSKeyName": {
+                    "default": "Secure@Source License Key Name"
+                },
+                "InformaticaSATSKeyS3Bucket": {
+                    "default": "Secure@Source License Key Location"
+                },
+                "InformaticaServerInstanceType": {
+                    "default": "Informatica Domain Instance Type"
+                },
+                "InformaticaServerSubnetID": {
+                    "default": "Informatica Domain Subnet"
+                },
                 "KeyName": {
                     "default": "Key Pair Name"
+                },
+                "VPCID": {
+                    "default": "VPC"
                 }
             }
+        }
+    },
+    "Parameters": {
+        "DBPassword": {
+            "Description": "Password for the database instance associated with Informatica domain and services (such as Model Repository Service, Data Integration Service, Content Management Service)",
+            "MaxLength": "18",
+            "MinLength": "8",
+            "NoEcho": "True",
+            "Type": "String"
+        },
+        "DBSubnetIDs": {
+            "Description": "IDs of two private subnets in the selected VPC. These must be in different Availability Zones in the selected VPC",
+            "Type": "List<AWS::EC2::Subnet::Id>"
+        },
+        "DBUser": {
+            "Description": "Username for the database instance associated with Informatica domain and services (such as Model Repository Service, Data Integration Service, Content Management Service)",
+            "MaxLength": "18",
+            "MinLength": "8",
+            "Type": "String"
+        },
+        "ICSClusterSize": {
+            "AllowedValues": [
+                "Small",
+                "Medium",
+                "Large"
+            ],
+            "Default": "Small",
+            "Description": "The cluster size (i.) Small (c4.8xlarge, single node) (ii.) Medium (c4.8xlarge, three nodes) (iii.)  Large (c4.8xlarge, six nodes)",
+            "Type": "String"
+        },
+        "IPAddressRange": {
+            "AllowedPattern": "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$",
+            "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x.",
+            "Description": "The CIDR IP range that is permitted to access the Informatica domain and the Informatica embedded cluster",
+            "MaxLength": "18",
+            "MinLength": "9",
+            "Type": "String"
+        },
+        "ImportSampleData": {
+            "AllowedValues": [
+                "Yes",
+                "No"
+            ],
+            "Default": "Yes",
+            "Description": "Select Yes to import the sample catalog data. You can use the sample data to get started with the product",
+            "Type": "String"
+        },
+        "InformaticaAdminPassword": {
+            "Description": "Password to access Informatica Administrator",
+            "NoEcho": "True",
+            "Type": "String"
+        },
+        "InformaticaAdminUsername": {
+            "Description": "Username to access Informatica Administrator",
+            "Type": "String"
+        },
+        "InformaticaSATSKeyName": {
+            "Description": "The Informatica Secure@Source license key name. For example, <license key name> or <bucket sub folder/license key name>",
+            "Type": "String"
+        },
+        "InformaticaSATSKeyS3Bucket": {
+            "Description": "Name of the Amazon S3 bucket in your account that contains the Informatica Secure@Source Key",
+            "Type": "String"
+        },
+        "InformaticaServerInstanceType": {
+            "AllowedValues": [
+                "c4.4xlarge",
+                "c4.8xlarge"
+            ],
+            "Default": "c4.4xlarge",
+            "Description": "The EC2 instance type for the instance that hosts the Informatica domain. Default is c4.4xlarge",
+            "Type": "String"
+        },
+        "InformaticaServerSubnetID": {
+            "Description": "Select a publicly accessible subnet ID for the Informatica domain",
+            "Type": "AWS::EC2::Subnet::Id"
+        },
+        "KeyName": {
+            "Description": "Name of an existing Amazon EC2 keypair. You must specify this option to enable SSH access to Informatica domain and cluster instances",
+            "Type": "AWS::EC2::KeyPair::KeyName"
+        },
+        "QSS3BucketName": {
+            "AllowedPattern": "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$",
+            "ConstraintDescription": "Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-).",
+            "Default": "quickstart-reference",
+            "Description": "S3 bucket name for the Quick Start assets. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-).",
+            "Type": "String"
+        },
+        "QSS3KeyPrefix": {
+            "AllowedPattern": "^[0-9a-zA-Z-]+(/[0-9a-zA-Z-]+)*$",
+            "ConstraintDescription": "Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/). It cannot start or end with forward slash (/) because they are automatically appended.",
+            "Default": "informatica/sats/latest",
+            "Description": "S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/). It cannot start or end with forward slash (/) because they are automatically appended.",
+            "Type": "String"
+        },
+        "VPCID": {
+            "Description": "ID of your existing VPC where you want to deploy Secure@Source",
+            "Type": "AWS::EC2::VPC::Id"
         }
     },
     "Mappings": {
@@ -360,6 +294,72 @@
             "eu-central-1": {
                 "Supporting": "NO"
             }
+        }
+    },
+    "Conditions": {
+        "SingleNodeCnd": {
+            "Fn::Equals": [
+                {
+                    "Ref": "ICSClusterSize"
+                },
+                "Small"
+            ]
+        },
+        "CreateMediumClusterCnd": {
+            "Fn::Equals": [
+                {
+                    "Ref": "ICSClusterSize"
+                },
+                "Medium"
+            ]
+        },
+        "CreateLargeClusterCnd": {
+            "Fn::Equals": [
+                {
+                    "Ref": "ICSClusterSize"
+                },
+                "Large"
+            ]
+        },
+        "MultipleNodeCnd": {
+            "Fn::Or": [
+                {
+                    "Condition": "CreateMediumClusterCnd"
+                },
+                {
+                    "Condition": "CreateLargeClusterCnd"
+                }
+            ]
+        },
+        "ImportSampleCnd": {
+            "Fn::Equals": [
+                {
+                    "Ref": "ImportSampleData"
+                },
+                "Yes"
+            ]
+        },
+        "SupportMultiAZCnd": {
+            "Fn::Equals": [
+                {
+                    "Fn::FindInMap": [
+                        "MultiAZRegionMapping",
+                        {
+                            "Ref": "AWS::Region"
+                        },
+                        "Supporting"
+                    ]
+                },
+                "YES"
+            ]
+        },
+        "DoNotSupportDbM4Class": {
+            "Fn::Equals": [
+                {
+                    "Ref": "AWS::Region"
+                },
+                "sa-east-1"
+            ]
         }
     },
     "Resources": {
