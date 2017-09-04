@@ -1,0 +1,70 @@
+[
+    {
+        "ParameterKey": "AvailabilityZones",
+        "ParameterValue": "$[alfred_genaz_2]"
+    },
+    {
+        "ParameterKey": "DBPassword",
+        "ParameterValue": "$[alfred_genpass_18]"
+    },
+    {
+        "ParameterKey": "DBUser",
+        "ParameterValue": "dbadministrator"
+    },
+    {
+        "ParameterKey": "ICSClusterSize",
+        "ParameterValue": "Large"
+    },
+    {
+        "ParameterKey": "IPAddressRange",
+        "ParameterValue": "10.0.0.0/16"
+    },
+    {
+        "ParameterKey": "ImportSampleData",
+        "ParameterValue": "Yes"
+    },
+    {
+        "ParameterKey": "InformaticaAdminPassword",
+        "ParameterValue": "$[alfred_genpass_18]"
+    },
+    {
+        "ParameterKey": "InformaticaAdminUsername",
+        "ParameterValue": "infaadmin"
+    },
+    {
+        "ParameterKey": "InformaticaSATSKeyName",
+        "ParameterValue": "informatica/eic/EICLicense.key"
+    },
+    {
+        "ParameterKey": "InformaticaSATSKeyS3Bucket",
+        "ParameterValue": "$[alfred_getlicensebucket]"
+    },
+    {
+        "ParameterKey": "InformaticaServerInstanceType",
+        "ParameterValue": "c4.4xlarge"
+    },
+    {
+        "ParameterKey": "KeyName",
+        "ParameterValue": "$[alfred_getkeypair]"
+    },
+    {
+        "ParameterKey": "PrivateSubnet1CIDR",
+        "ParameterValue": "10.0.0.0/19"
+    },
+    {
+        "ParameterKey": "PrivateSubnet2CIDR",
+        "ParameterValue": "10.0.32.0/19"
+    },
+    {
+        "ParameterKey": "PublicSubnet1CIDR",
+        "ParameterValue": "10.0.128.0/20"
+    },
+    {
+        "ParameterKey": "PublicSubnet2CIDR",
+        "ParameterValue": "10.0.144.0/20"
+    },
+    {
+        "ParameterKey": "VPCCIDR",
+        "ParameterValue": "10.0.0.0/16"
+    }
+]
