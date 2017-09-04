@@ -214,51 +214,51 @@
       },
       "ap-northeast-1": {
         "INFASATSADMINHVM": "ami-f4cc3e92",
-        "INFASATSCLUSTERHVM": "ami-7a04fb1c"
+        "INFASATSCLUSTERHVM": "ami-7a66a31c"
       },
       "ap-northeast-2": {
         "INFASATSADMINHVM": "ami-f5c51d9b",
-        "INFASATSCLUSTERHVM": "ami-1302da7d"
+        "INFASATSCLUSTERHVM": "ami-70805b1e"
       },
       "ap-south-1": {
         "INFASATSADMINHVM": "ami-0b581d64",
-        "INFASATSCLUSTERHVM": "ami-bdd491d2"
+        "INFASATSCLUSTERHVM": "ami-95e5a1fa"
       },
       "ap-southeast-1": {
         "INFASATSADMINHVM": "ami-253a5c46",
-        "INFASATSCLUSTERHVM": "ami-13771770"
+        "INFASATSCLUSTERHVM": "ami-07137c64"
       },
       "ap-southeast-2": {
         "INFASATSADMINHVM": "ami-f5c51d9b",
-        "INFASATSCLUSTERHVM": "ami-c1041ea2"
+        "INFASATSCLUSTERHVM": "ami-d17f9ab3"
       },
       "eu-central-1": {
         "INFASATSADMINHVM": "ami-f8e74c97",
-        "INFASATSCLUSTERHVM": "ami-62e2480d"
+        "INFASATSCLUSTERHVM": "ami-d102b7be"
       },
       "eu-west-1": {
         "INFASATSADMINHVM": "ami-b7817ece",
-        "INFASATSCLUSTERHVM": "ami-0e18e177"
+        "INFASATSCLUSTERHVM": "ami-bcdf1bc5"
       },
       "sa-east-1": {
         "INFASATSADMINHVM": "ami-24007048",
-        "INFASATSCLUSTERHVM": "ami-fbfa8a97"
+        "INFASATSCLUSTERHVM": "ami-6dec9f01"
       },
       "us-east-1": {
         "INFASATSADMINHVM": "ami-b8102bc3",
-        "INFASATSCLUSTERHVM": "ami-5f2a2a24"
+        "INFASATSCLUSTERHVM": "ami-f7d9cf8c"
       },
       "us-east-2": {
         "INFASATSADMINHVM": "ami-622b0807",
-        "INFASATSCLUSTERHVM": "ami-581c3f3d"
+        "INFASATSCLUSTERHVM": "ami-e5664480"
       },
       "us-west-1": {
         "INFASATSADMINHVM": "ami-9d7d48fd",
-        "INFASATSCLUSTERHVM": "ami-27daef47"
+        "INFASATSCLUSTERHVM": "ami-fd98ac9d"
       },
       "us-west-2": {
         "INFASATSADMINHVM": "ami-1b30df63",
-        "INFASATSCLUSTERHVM": "ami-ba44adc2"
+        "INFASATSCLUSTERHVM": "ami-8ce014f4"
       }
     },
     "ClusterSizeMapping": {
