@@ -33,7 +33,7 @@
     },
     {
         "ParameterKey": "InformaticaSATSKeyName",
-        "ParameterValue": "informatica/eic/EICLicense.key"
+        "ParameterValue": "informatica/sats/SATSLicense.key"
     },
     {
         "ParameterKey": "InformaticaSATSKeyS3Bucket",
