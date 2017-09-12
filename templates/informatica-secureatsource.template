@@ -1410,17 +1410,6 @@
         "InfaDB": {
             "Type": "AWS::RDS::DBInstance",
             "Properties": {
-                "DBInstanceIdentifier": {
-                    "Fn::Join": [
-                        "",
-                        [
-                            "infadb-",
-                            {
-                                "Ref": "AWS::StackName"
-                            }
-                        ]
-                    ]
-                },
                 "AllocatedStorage": "500",
                 "MultiAZ": {
                     "Fn::If": [
