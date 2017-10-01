@@ -229,7 +229,7 @@
                 "INFASATSCLUSTERHVM": "ami-07137c64"
             },
             "ap-southeast-2": {
-                "INFASATSADMINHVM": "ami-97c8d3f4",
+                "INFASATSADMINHVM": "ami-f5c51d9b",
                 "INFASATSCLUSTERHVM": "ami-d17f9ab3"
             },
             "eu-central-1": {
