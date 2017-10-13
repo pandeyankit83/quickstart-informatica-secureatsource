@@ -2578,6 +2578,9 @@
                             },
                             "07_SATSServiceSetup": {
                                 "command": "sudo /home/ec2-user/Mercury_Setup/launchSATSService.sh"
+                            },
+                            "08_Cleanup": {
+                                "command": "sudo rm -f /home/ec2-user/Mercury_Setup/*.sh"
                             }
                         }
                     }
