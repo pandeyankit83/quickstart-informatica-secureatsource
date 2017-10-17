@@ -1,6 +1,6 @@
 {
     "AWSTemplateFormatVersion": "2010-09-09",
-    "Description": "Informatica Secure@Source. This template creates Amazon EC2 instances, Elastic IPs and related resources. You will be billed for the AWS resources used if you create a stack from this template.",
+    "Description": "Informatica Secure@Source. This template creates Amazon EC2 instances, Elastic IPs and related resources. You will be billed for the AWS resources used if you create a stack from this template. (qs-1npd92p13)",
     "Metadata": {
         "AWS::CloudFormation::Interface": {
             "ParameterGroups": [
