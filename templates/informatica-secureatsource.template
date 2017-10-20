@@ -1368,24 +1368,6 @@
                             "Ref": "IPAddressRange"
                         }
                     }
-                ],
-                "SecurityGroupEgress": [
-                    {
-                        "IpProtocol": "tcp",
-                        "FromPort": "0",
-                        "ToPort": "65535",
-                        "CidrIp": {
-                            "Ref": "IPAddressRange"
-                        }
-                    },
-                    {
-                        "IpProtocol": "udp",
-                        "FromPort": "0",
-                        "ToPort": "65535",
-                        "CidrIp": {
-                            "Ref": "IPAddressRange"
-                        }
-                    }
                 ]
             }
         },
@@ -1508,6 +1490,22 @@
                     },
                     {
                         "IpProtocol": "tcp",
+                        "FromPort": "8095",
+                        "ToPort": "8095",
+                        "CidrIp": {
+                            "Ref": "IPAddressRange"
+                        }
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "8785",
+                        "ToPort": "8785",
+                        "CidrIp": {
+                            "Ref": "IPAddressRange"
+                        }
+                    },
+                    {
+                        "IpProtocol": "tcp",
                         "FromPort": "8085",
                         "ToPort": "8085",
                         "CidrIp": {
@@ -1524,56 +1522,8 @@
                     },
                     {
                         "IpProtocol": "tcp",
-                        "FromPort": "8105",
-                        "ToPort": "8105",
-                        "CidrIp": {
-                            "Ref": "IPAddressRange"
-                        }
-                    },
-                    {
-                        "IpProtocol": "tcp",
-                        "FromPort": "8095",
-                        "ToPort": "8095",
-                        "CidrIp": {
-                            "Ref": "IPAddressRange"
-                        }
-                    },
-                    {
-                        "IpProtocol": "tcp",
-                        "FromPort": "8084",
-                        "ToPort": "8084",
-                        "CidrIp": {
-                            "Ref": "IPAddressRange"
-                        }
-                    },
-                    {
-                        "IpProtocol": "tcp",
                         "FromPort": "8089",
                         "ToPort": "8089",
-                        "CidrIp": {
-                            "Ref": "IPAddressRange"
-                        }
-                    },
-                    {
-                        "IpProtocol": "tcp",
-                        "FromPort": "8785",
-                        "ToPort": "8785",
-                        "CidrIp": {
-                            "Ref": "IPAddressRange"
-                        }
-                    },
-                    {
-                        "IpProtocol": "tcp",
-                        "FromPort": "10250",
-                        "ToPort": "10250",
-                        "CidrIp": {
-                            "Ref": "IPAddressRange"
-                        }
-                    },
-                    {
-                        "IpProtocol": "tcp",
-                        "FromPort": "7333",
-                        "ToPort": "7333",
                         "CidrIp": {
                             "Ref": "IPAddressRange"
                         }
@@ -1588,14 +1538,6 @@
                     },
                     {
                         "IpProtocol": "tcp",
-                        "FromPort": "0",
-                        "ToPort": "65535",
-                        "CidrIp": {
-                            "Ref": "IPAddressRange"
-                        }
-                    },
-                    {
-                        "IpProtocol": "tcp",
                         "FromPort": "22",
                         "ToPort": "22",
                         "CidrIp": {
@@ -1603,9 +1545,33 @@
                         }
                     },
                     {
+                        "IpProtocol": "tcp",
+                        "FromPort": "21000",
+                        "ToPort": "22000",
+                        "CidrIp": {
+                            "Ref": "IPAddressRange"
+                        }
+                    },
+                    {
                         "IpProtocol": "udp",
-                        "FromPort": "0",
-                        "ToPort": "65535",
+                        "FromPort": "1434",
+                        "ToPort": "1434",
+                        "CidrIp": {
+                            "Ref": "IPAddressRange"
+                        }
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "51000",
+                        "ToPort": "51000",
+                        "CidrIp": {
+                            "Ref": "IPAddressRange"
+                        }
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": "6200",
+                        "ToPort": "6200",
                         "CidrIp": {
                             "Ref": "IPAddressRange"
                         }
