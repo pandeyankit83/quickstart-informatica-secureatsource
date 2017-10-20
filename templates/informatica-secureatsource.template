@@ -274,44 +274,6 @@
                 "InstanceType": "c4.8xlarge",
                 "NumberOfInstances": "6"
             }
-        },
-        "MultiAZRegionMapping": {
-            "us-east-1": {
-                "Supporting": "YES"
-            },
-            "us-east-2": {
-                "Supporting": "YES"
-            },
-            "us-west-1": {
-                "Supporting": "NO"
-            },
-            "us-west-2": {
-                "Supporting": "YES"
-            },
-            "ap-south-1": {
-                "Supporting": "YES"
-            },
-            "ap-northeast-1": {
-                "Supporting": "YES"
-            },
-            "ap-northeast-2": {
-                "Supporting": "YES"
-            },
-            "ap-southeast-1": {
-                "Supporting": "NO"
-            },
-            "ap-southeast-2": {
-                "Supporting": "YES"
-            },
-            "sa-east-1": {
-                "Supporting": "YES"
-            },
-            "eu-west-1": {
-                "Supporting": "YES"
-            },
-            "eu-central-1": {
-                "Supporting": "NO"
-            }
         }
     },
     "Rules": {
@@ -379,26 +341,31 @@
                 "Yes"
             ]
         },
-        "SupportMultiAZCnd": {
-            "Fn::Equals": [
+        "RDSSQLServerMultiAZSupportCnd": {
+            "Fn::Not": [
                 {
-                    "Fn::FindInMap": [
-                        "MultiAZRegionMapping",
+                    "Condition": "NoRDSSQLServerMultiAZSupportCnd"
+                }
+            ]
+        },
+        "NoRDSSQLServerMultiAZSupportCnd": {
+            "Fn::Or": [
+                {
+                    "Fn::Equals": [
                         {
                             "Ref": "AWS::Region"
                         },
-                        "Supporting"
+                        "ap-southeast-1"
                     ]
                 },
-                "YES"
-            ]
-        },
-        "DoNotSupportDbM4Class": {
-            "Fn::Equals": [
                 {
-                    "Ref": "AWS::Region"
-                },
-                "sa-east-1"
+                    "Fn::Equals": [
+                        {
+                            "Ref": "AWS::Region"
+                        },
+                        "us-west-1"
+                    ]
+                }
             ]
         }
     },
@@ -1395,7 +1362,7 @@
                 "AllocatedStorage": "500",
                 "MultiAZ": {
                     "Fn::If": [
-                        "SupportMultiAZCnd",
+                        "RDSSQLServerMultiAZSupportCnd",
                         "true",
                         {
                             "Ref": "AWS::NoValue"
@@ -1404,13 +1371,7 @@
                 },
                 "StorageType": "gp2",
                 "LicenseModel": "license-included",
-                "DBInstanceClass": {
-                    "Fn::If": [
-                        "DoNotSupportDbM4Class",
-                        "db.m3.2xlarge",
-                        "db.m4.2xlarge"
-                    ]
-                },
+                "DBInstanceClass": "db.m4.2xlarge",
                 "DBSubnetGroupName": {
                     "Ref": "InfaDBSubnetGroup"
                 },
