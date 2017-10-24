@@ -1742,6 +1742,7 @@
                                             "sudo su -c \"sed -i '$ a $privateIp $publicDnsName' /etc/hosts\" \n",
                                             "sudo su -c \"echo HOSTNAME=$publicDnsName >> /etc/sysconfig/network\" \n",
                                             "sudo su -c \"sed -i '$ a preserve_hostname: true' /etc/cloud/cloud.cfg\" \n",
+                                            "sudo su -c \"sed -i 's/# Check for sudo privileges for $HadoopUser/result_status_local=0;# Check for sudo privileges for $HadoopUser/g' /opt/informatica/sub/source/services/InfaHadoopService/Binaries/PreValidation.sh\" \n",
                                             "#sudo rpm -e sats_analytics > /tmp/uba.txt 2>&1; sudo rpm -ivh /tmp/sats_analytics-3.0-811.x86_64.rpm\n",
                                             "etcHostsConfigOfCluster=\"",
                                             {
