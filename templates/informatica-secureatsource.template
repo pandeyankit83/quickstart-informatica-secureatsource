@@ -213,52 +213,52 @@
                 "INFASATSCLUSTERHVM": "Informatica EIC & SecureAtSource Cluster Image"
             },
             "ap-northeast-1": {
-                "INFASATSADMINHVM": "ami-f4cc3e92",
-                "INFASATSCLUSTERHVM": "ami-7a66a31c"
+                "INFASATSADMINHVM": "ami-67bd1101",
+                "INFASATSCLUSTERHVM": "ami-47be1221"
             },
             "ap-northeast-2": {
-                "INFASATSADMINHVM": "ami-f5c51d9b",
-                "INFASATSCLUSTERHVM": "ami-70805b1e"
+                "INFASATSADMINHVM": "ami-c7a400a9",
+                "INFASATSCLUSTERHVM": "ami-10a5017e"
             },
             "ap-south-1": {
-                "INFASATSADMINHVM": "ami-0b581d64",
-                "INFASATSCLUSTERHVM": "ami-95e5a1fa"
+                "INFASATSADMINHVM": "ami-8ec98be1",
+                "INFASATSCLUSTERHVM": "ami-2fa8ea40"
             },
             "ap-southeast-1": {
-                "INFASATSADMINHVM": "ami-253a5c46",
-                "INFASATSCLUSTERHVM": "ami-07137c64"
+                "INFASATSADMINHVM": "ami-cd8ac6ae",
+                "INFASATSCLUSTERHVM": "ami-2588c446"
             },
             "ap-southeast-2": {
-                "INFASATSADMINHVM": "ami-97c8d3f4",
-                "INFASATSCLUSTERHVM": "ami-d17f9ab3"
+                "INFASATSADMINHVM": "ami-d06789b2",
+                "INFASATSCLUSTERHVM": "ami-32668850"
             },
             "eu-central-1": {
-                "INFASATSADMINHVM": "ami-f8e74c97",
-                "INFASATSCLUSTERHVM": "ami-d102b7be"
+                "INFASATSADMINHVM": "ami-fb2aae94",
+                "INFASATSCLUSTERHVM": "ami-5e35b131"
             },
             "eu-west-1": {
-                "INFASATSADMINHVM": "ami-b7817ece",
-                "INFASATSCLUSTERHVM": "ami-bcdf1bc5"
+                "INFASATSADMINHVM": "ami-ddf85ea4",
+                "INFASATSCLUSTERHVM": "ami-eef95f97"
             },
             "sa-east-1": {
-                "INFASATSADMINHVM": "ami-24007048",
-                "INFASATSCLUSTERHVM": "ami-6dec9f01"
+                "INFASATSADMINHVM": "ami-da057eb6",
+                "INFASATSCLUSTERHVM": "ami-6c057e00"
             },
             "us-east-1": {
-                "INFASATSADMINHVM": "ami-b8102bc3",
-                "INFASATSCLUSTERHVM": "ami-f7d9cf8c"
+                "INFASATSADMINHVM": "ami-5cdb7126",
+                "INFASATSCLUSTERHVM": "ami-2dde7457"
             },
             "us-east-2": {
-                "INFASATSADMINHVM": "ami-622b0807",
-                "INFASATSCLUSTERHVM": "ami-e5664480"
+                "INFASATSADMINHVM": "ami-ec1c3389",
+                "INFASATSCLUSTERHVM": "ami-8b1e31ee"
             },
             "us-west-1": {
-                "INFASATSADMINHVM": "ami-9d7d48fd",
-                "INFASATSCLUSTERHVM": "ami-fd98ac9d"
+                "INFASATSADMINHVM": "ami-52ad9132",
+                "INFASATSCLUSTERHVM": "ami-54ac9034"
             },
             "us-west-2": {
-                "INFASATSADMINHVM": "ami-1b30df63",
-                "INFASATSCLUSTERHVM": "ami-8ce014f4"
+                "INFASATSADMINHVM": "ami-b56aa1cd",
+                "INFASATSCLUSTERHVM": "ami-c268a3ba"
             }
         },
         "ClusterSizeMapping": {
@@ -733,6 +733,8 @@
                                 "\n",
                                 " sudo yum update -y aws-cfn-bootstrap || error_exit\n",
                                 "# Install the files and packages from the metadata\n",
+                                 " sudo yum install -y python-devel-2.7.5-34.el7.x86_64 || error_exit\n",
+                                " echo 'exclude=python*' >> /etc/yum.conf \n",
                                 "sudo /home/ec2-user/Mercury_Setup/replaceHostname.sh || error_exit\n",
                                 "\n",
                                 " response=$(sudo /bin/systemctl status sshd.service || error_exit)\n",
@@ -816,6 +818,8 @@
                                 "\n",
                                 " sudo yum update -y aws-cfn-bootstrap || error_exit\n",
                                 "# Install the files and packages from the metadata\n",
+                                " sudo yum install -y python-devel-2.7.5-34.el7.x86_64 || error_exit\n",
+                                " echo 'exclude=python*' >> /etc/yum.conf \n",
                                 "sudo /home/ec2-user/Mercury_Setup/replaceHostname.sh || error_exit\n",
                                 "\n",
                                 " response=$(sudo /bin/systemctl status sshd.service || error_exit)\n",
@@ -906,6 +910,8 @@
                                 "}\n",
                                 "\n",
                                 " sudo yum update -y aws-cfn-bootstrap || error_exit\n",
+                                " sudo yum install -y python-devel-2.7.5-34.el7.x86_64 || error_exit\n",
+                                " echo 'exclude=python*' >> /etc/yum.conf \n",
                                 "# Install the files and packages from the metadata\n",
                                 " sudo /home/ec2-user/Mercury_Setup/replaceHostname.sh || error_exit\n",
                                 "\n",
@@ -997,6 +1003,8 @@
                                 "}\n",
                                 "\n",
                                 " sudo yum update -y aws-cfn-bootstrap || error_exit\n",
+                                " sudo yum install -y python-devel-2.7.5-34.el7.x86_64 || error_exit\n",
+                                " echo 'exclude=python*' >> /etc/yum.conf \n",
                                 "# Install the files and packages from the metadata\n",
                                 " sudo /home/ec2-user/Mercury_Setup/replaceHostname.sh || error_exit\n",
                                 "\n",
@@ -1089,6 +1097,8 @@
                                 "\n",
                                 " sudo yum update -y aws-cfn-bootstrap || error_exit\n",
                                 "# Install the files and packages from the metadata\n",
+                                " sudo yum install -y python-devel-2.7.5-34.el7.x86_64 || error_exit\n",
+                                " echo 'exclude=python*' >> /etc/yum.conf \n",
                                 " sudo /home/ec2-user/Mercury_Setup/replaceHostname.sh || error_exit\n",
                                 "\n",
                                 " response=$(sudo /bin/systemctl status sshd.service || error_exit)\n",
@@ -1179,6 +1189,8 @@
                                 "}\n",
                                 "\n",
                                 " sudo yum update -y aws-cfn-bootstrap || error_exit\n",
+                                " sudo yum install -y python-devel-2.7.5-34.el7.x86_64 || error_exit\n",
+                                " echo 'exclude=python*' >> /etc/yum.conf \n",
                                 "# Install the files and packages from the metadata\n",
                                 " sudo /home/ec2-user/Mercury_Setup/replaceHostname.sh || error_exit\n",
                                 "\n",
@@ -1271,6 +1283,8 @@
                                 "\n",
                                 " sudo yum update -y aws-cfn-bootstrap || error_exit\n",
                                 "# Install the files and packages from the metadata\n",
+                                " sudo yum install -y python-devel-2.7.5-34.el7.x86_64 || error_exit\n",
+                                " echo 'exclude=python*' >> /etc/yum.conf \n",
                                 " sudo /home/ec2-user/Mercury_Setup/replaceHostname.sh || error_exit\n",
                                 "\n",
                                 " response=$(sudo /bin/systemctl status sshd.service || error_exit)\n",
@@ -2096,6 +2110,8 @@
                                                     ]
                                                 ]
                                             },
+                                            "export ODBCHOME=/opt/informatica/ODBC7.1 \n",
+                                            "export ODBCINI=/opt/informatica/ODBC7.1/odbc.ini \n",
                                             "sed -i -e 's/domainname/Domain/g' /home/ec2-user/Mercury_Setup/config_template.xml\n",
                                             "sed -i -e 's/nodename/Node/g' /home/ec2-user/Mercury_Setup/config_template.xml\n",
                                             "sed -i -e 's/licensename/License/g' /home/ec2-user/Mercury_Setup/config_template.xml\n",
@@ -2302,7 +2318,7 @@
                                 "owner": "ec2-user",
                                 "group": "ec2-user"
                             },
-                            "/home/ec2-user/Mercury_Setup/launchVDSService.sh": {
+                            "/home/ec2-user/Mercury_Setup/launchPDMService.sh": {
                                 "content": {
                                     "Fn::Join": [
                                         "",
@@ -2320,33 +2336,51 @@
                                             "\n",
                                             "sudo /opt/informatica/isp/bin/infacmd.sh  ihs updateServiceOptions -dn Domain -un $administratorName -pd $administratorPassword -o HadoopServicesProperties.yarn_nodemanager_resource_memory_mb=100000 -sn Informatica_Cluster_Service \n",
                                             "sudo /opt/informatica/isp/bin/infacmd.sh  ldm updateServiceOptions -dn Domain -un $administratorName -pd $administratorPassword -o LdmCustomOptions.ingest.enable.propagation=false -sn Catalog_Service \n",
-                                            "cd /home/ec2-user/sats \n",
-                                            "sudo sed -i \"s/10\\.1\\.1/10\\.0\\.0/g\" /opt/informatica/version.txt; \n",
-                                            "privateIp=$(curl http://169.254.169.254/latest/meta-data/local-ipv4); \n",
-                                            "sed -i \"s/network_interface/$privateIp/g\" /home/ec2-user/sats/VDS/SilentInput.properties; \n",
-                                            "hadoop_ip=`grep \"etcHostsConfigOfCluster=\" /home/ec2-user/Mercury_Setup/replaceHostname.sh | cut -d'=' -f2 | sed -e 's/\"//g' | cut -d' ' -f1`;\n",
-                                            "sed -i \"s/zookeeper_url/$hadoop_ip:2181/g\" /home/ec2-user/sats/VDS/SilentInput.properties; \n",
-                                            "echo \"context transport_tcp_port_high 14490\" >> /opt/informatica/admind/config/umestored.cfg \n",
-                                            "echo \"context transport_tcp_port_low  14371\" >> /opt/informatica/admind/config/umestored.cfg \n",
-                                            "echo \"context transport_tcp_maximum_ports 10\" >> /opt/informatica/admind/config/umestored.cfg \n",
-                                            "echo \"source transport_tcp_reuseaddr 1\" >> /opt/informatica/admind/config/umestored.cfg \n",
-                                            "cd /home/ec2-user/sats/VDS/;sudo /home/ec2-user/sats/VDS/silentinstall.sh; \n",
-                                            "#cd /home/ec2-user/sats/VDS_EBF/ebf; \n",
-                                            "#sudo ./installEBF.sh; \n",
-                                            "export HOSTNAME=`cat /etc/hostname` \n",
+                                            "PublicDnsName=$(curl http://169.254.169.254/latest/meta-data/public-hostname) \n",
+                                            "sudo su -c \"sed -i '/^INFA_JRE/a HOSTNAME=$publicDnsName' /opt/informatica/tomcat/temp/envvars.txt\" \n",
+                                            "sudo su -c \"sed -i '/^INFA_JRE/a HOSTNAME=$publicDnsName' /opt/informatica/tomcat/temp/tomcat_envvars.txt\" \n",
                                             "sudo /opt/informatica/tomcat/bin/infaservice.sh shutdown; \n",
-                                            "sudo sleep 3m; \n",
-                                            "sudo /opt/informatica/tomcat/bin/infaservice.sh startup; \n",
                                             "sudo sleep 5m; \n",
-                                            "sudo /opt/informatica/isp/bin/infacmd.sh disableservice -dn Domain -un $administratorName -pd $administratorPassword -sdn Native  -sn _AdminConsole -mo Stop; \n",
-                                            "sudo sleep 1m; \n",
-                                            "sudo /opt/informatica/isp/bin/infacmd.sh enableservice -dn Domain -un $administratorName -pd $administratorPassword -sdn Native  -sn _AdminConsole; \n",
-                                            "sudo sleep 30; \n",
-                                            "sudo /opt/informatica/admind/bin/admin.sh start; \n",
-                                            "sudo /opt/informatica/node/bin/node.sh start; \n",
-                                            "sudo sleep 40; \n",
-                                            "sudo /opt/informatica/isp/bin/infacmd.sh vds createService -dn Domain -nn Node -un $administratorName -pd $administratorPassword -sn Vibe_Data_Stream_Service -dt SQLSERVER -du ",
+                                            "sudo HOSTNAME=`cat /etc/hostname` /opt/informatica/tomcat/bin/infaservice.sh startup; \n",
+                                            "sudo sleep 3m; \n",
+                                            "sudo /opt/informatica/isp/bin/infacmd.sh createRepositoryService -dn Domain -un $administratorName -pd $administratorPassword -sn PCRS -nn Node -so OperatingMode=Exclusive DBUser=",
                                             {
+                                                "Ref": "DBUser"
+                                            },
+                                            " DBPassword=",
+                                            {
+                                                "Ref": "DBPassword"
+                                            },
+                                            " ConnectString=",
+                                            {
+                                                "Fn::GetAtt": [
+                                                    "InfaDB",
+                                                    "Endpoint.Address"
+                                                ]
+                                            },
+                                            "@infapcrsdb ",
+                                            " DatabaseType='MSSQLSERVER' CodePage='UTF-8 encoding of Unicode'  -ln License \n",
+                                            "sudo /opt/informatica/isp/bin/infacmd.sh  enableService -dn Domain -un $administratorName -pd $administratorPassword -sn PCRS \n",
+                                            "cd /opt/informatica/server/bin; export LD_LIBRARY_PATH=`pwd`:$LD_LIBRARY_PATH; ./pmrep connect -r PCRS -d Domain \n",
+                                            "cd /opt/informatica/server/bin; export LD_LIBRARY_PATH=`pwd`:$LD_LIBRARY_PATH; ./pmrep create -u $administratorName -p $administratorPassword \n",
+                                            "sudo /opt/informatica/isp/bin/infacmd.sh  disableService -dn Domain -un $administratorName -pd $administratorPassword -sn PCRS  -mo COMPLETE \n",
+                                            "sudo sleep 1m \n",
+                                            "sudo /opt/informatica/isp/bin/infacmd.sh  updateRepositoryService -dn Domain -un $administratorName -pd $administratorPassword -sn PCRS", 
+                                            " -nn Node  -so OperatingMode=Normal \n",  
+                                            "sudo /opt/informatica/isp/bin/infacmd.sh  enableService -dn Domain -un $administratorName -pd Administrator -sn PCRS \n",
+                                            "sudo sleep 1m \n",
+                                            "sudo /opt/informatica/isp/bin/infacmd.sh  createIntegrationService -dn Domain -un $administratorName -pd $administratorPassword",
+                                            " -sn PCIS -nn Node -rs PCRS -ru $administratorName -rp $administratorPassword -so DataMovementMode=Unicode -po Codepage_Id=106 -ln License \n",
+                                            "sudo rsync -a  /home/ec2-user/TDM/infa_shared/ /opt/informatica/infa_shared \n",
+                                            "sudo rsync -a  /home/ec2-user/TDM/isp/ /opt/informatica/isp \n",
+                                            "sudo rsync -a  /home/ec2-user/TDM/plugins/ /opt/informatica/plugins \n",
+                                            "sudo rsync -a /home/ec2-user/TDM/services/ /opt/informatica/services \n",
+                                            "sudo rsync -a /home/ec2-user/TDM/TDM /opt/informatica \n",
+                                            "sudo rsync -a /home/ec2-user/TDM/TDW /opt/informatica \n",
+                                            "sudo /opt/informatica/isp/bin/infacmd.sh tdm createService -dn Domain -sn Persistent_Data_Masking_Service -un $administratorName -pd $administratorPassword ",
+                                            " -nn Node -pcrs PCRS -pcis PCIS -mrs Model_Repository_Service -rsun $administratorName -rspd $administratorPassword -dis Data_Integration_Service  ",
+                                            " -dt SQLSERVER -du ",
+ {
                                                 "Ref": "DBUser"
                                             },
                                             " -dp ",
@@ -2360,7 +2394,23 @@
                                                     "Endpoint.Address"
                                                 ]
                                             },
-                                            ":1433;SelectMethod=cursor;databaseName=infavdsdb' -lsn License; \n"
+                                            ":1433;SelectMethod=cursor;databaseName=infatdmdb' -ep true -ln License -dc ",
+                                            {
+                                                "Fn::GetAtt": [
+                                                    "InfaDB",
+                                                    "Endpoint.Address"
+                                                ]
+                                            },
+                                            "@infatdmdb \n",
+                                            "sudo /opt/informatica/isp/bin/infacmd.sh  tdm createContents -dn Domain -sn Persistent_Data_Masking_Service -un $administratorName ",
+                                            " -pd $administratorPassword -sdn '' \n ",
+                                            "sudo /opt/informatica/isp/bin/infacmd.sh  enableService -dn Domain -un $administratorName -pd $administratorPassword ",
+                                            "-sn Persistent_Data_Masking_Service  -sdn ''  \n",
+                                            "sudo /opt/informatica/isp/bin/infacmd.sh disableservice -dn Domain -un $administratorName -pd $administratorPassword -sdn Native  -sn _AdminConsole -mo Stop; \n",
+                                            "sudo sleep 1m; \n",
+                                            "sudo /opt/informatica/isp/bin/infacmd.sh enableservice -dn Domain -un $administratorName -pd $administratorPassword -sdn Native  -sn _AdminConsole; \n",
+                                            "sudo sleep 30; \n",
+                                            "sudo cp /opt/informatica/infa_shared/LkpFiles/* /opt/informatica/server/infa_shared/LkpFiles/ \n"
                                         ]
                                     ]
                                 },
@@ -2384,7 +2434,9 @@
                                                 "Ref": "InformaticaAdminPassword"
                                             },
                                             "\n",
-                                            "cd /home/ec2-user/sats/SATS/;\n",
+                                            "sudo /opt/informatica/isp/bin/infacmd.sh  ihs updateServiceOptions -dn Domain -un $administratorName -pd $administratorPassword -o HadoopServicesProperties.yarn_nodemanager_resource_memory_mb=100000 -sn Informatica_Cluster_Service \n",
+                                            "sudo /opt/informatica/isp/bin/infacmd.sh  ldm updateServiceOptions -dn Domain -un $administratorName -pd $administratorPassword -o LdmCustomOptions.ingest.enable.propagation=false -sn Catalog_Service \n",
+                                            "cd /home/ec2-user/SATS/;\n",
                                             "license_file=license.txt_`hostname -f` \n",
                                             "curl http://169.254.169.254/latest/dynamic/instance-identity/document > $license_file \n",
                                             "echo \"=====================================\" >> $license_file \n",
@@ -2395,18 +2447,22 @@
                                             "dateValue=`date -R` \n",
                                             "curl -L -X PUT -T \"${license_file}\" -H \"Host: ${bucket}.s3.amazonaws.com\"  -H \"Date: ${dateValue}\" -H \"Content-Type: ${contentType}\" https://${bucket}.s3.amazonaws.com/${license_file} \n",
                                             "export HOSTNAME=`cat /etc/hostname` \n",
-                                            "sudo sh  /home/ec2-user/sats/SATS/silentinstall.sh > /tmp/sats.txt 2>&1 & ",
+                                            "sudo sh  /home/ec2-user/SATS/silentinstall.sh > /tmp/sats.txt 2>&1 & ",
                                             "\n",
                                             "install_pid=$! \n",
-                                            "sudo sleep 5m; \n",
+                                            "sudo sleep 3m; \n",
                                             "sudo pkill -TERM -P $install_pid \n",
-                                            "sudo /home/ec2-user/sats/SATS_EBF/installEBF.sh \n",
+                                            "#sudo /home/ec2-user/sats/SATS_EBF/installEBF.sh \n",
+                                            "#publicDnsName=$(curl http://169.254.169.254/latest/meta-data/public-hostname) \n",
+                                            "#sudo su -c \"sed -i '/^INFA_JRE/a HOSTNAME=$publicDnsName' /opt/informatica/tomcat/temp/envvars.txt\" \n",
+                                            "#sudo su -c \"sed -i '/^INFA_JRE/a HOSTNAME=$publicDnsName' /opt/informatica/tomcat/temp/tomcat_envvars.txt\" \n",
                                             "cd /opt/informatica/services/AdministratorConsole/webapps; sudo rm -rf adminconsole administrator monitoring ows ROOT; cd -;",
                                             "sudo /opt/informatica/isp/bin/infacmd.sh disableservice -dn Domain -un $administratorName -pd $administratorPassword -sdn Native  -sn _AdminConsole -mo Stop; \n",
                                             "sudo sleep 1m; \n",
                                             "sudo /opt/informatica/isp/bin/infacmd.sh enableservice -dn Domain -un $administratorName -pd $administratorPassword -sdn Native  -sn _AdminConsole; \n",
                                             "sudo sleep 30; \n",
-                                            "sudo /opt/informatica/isp/bin/infacmd.sh sats createService -dn Domain -nn Node -un $administratorName -pd $administratorPassword -sn SecureAtSource_Service -dt SQLSERVER -du ",
+                                            "sudo /opt/informatica/isp/bin/infacmd.sh sats createService -dn Domain -nn Node -un $administratorName -pd $administratorPassword -sn 
+                                            SecureAtSource_Service -dt SQLSERVER -du ",
                                             {
                                                 "Ref": "DBUser"
                                             },
@@ -2421,12 +2477,13 @@
                                                     "Endpoint.Address"
                                                 ]
                                             },
-                                            ":1433;SelectMethod=cursor;databaseName=infasatsdb'  -csn Catalog_Service -csun $administratorName -cspd $administratorPassword -bsn Vibe_Data_Stream_Service -bsun $administratorName -bspd $administratorPassword -HttpPort 6200 -ll DEBUG; \n",
+                                            ":1433;SelectMethod=cursor;databaseName=infasatsdb' -pmsn Persistent_Data_Masking_Service -csn Catalog_Service -csun $administratorName -cspd $administratorPassword  -HttpPort 6200 -ll DEBUG; \n",
                                             "sudo /opt/informatica/isp/bin/infacmd.sh assignLicense -dn Domain -un $administratorName -pd $administratorPassword -ln License -sn SecureAtSource_Service; \n",
                                             "RET=1 \n",
                                             "COUNTER=0 \n",
                                             "while [[ $RET -ne 0 && $COUNTER -lt 3 ]]; do echo \"Running create contents\"; ((++COUNTER)); sudo /opt/informatica/isp/bin/infacmd.sh sats createContents -dn Domain -sdn Native -un $administratorName -pd $administratorPassword -sn SecureAtSource_Service; RET=$?;sleep 100; done \n",
-                                            "sudo /opt/informatica/isp/bin/infacmd.sh enableService -dn Domain -sdn Native -un $administratorName -pd $administratorPassword -sn SecureAtSource_Service; \n"
+                                            "sudo /opt/informatica/isp/bin/infacmd.sh sats updateServiceOptions -dn Domain -un $administratorName -pd $administratorPassword -sn SecureAtSource_Service -opts EnableUserActivity='true' \n",
+                                            sudo /opt/informatica/isp/bin/infacmd.sh enableService -dn Domain -sdn Native -un $administratorName -pd $administratorPassword -sn SecureAtSource_Service
                                         ]
                                     ]
                                 },
@@ -2490,7 +2547,9 @@
                                             "infacmsdb ",
                                             "infapwhdb ",
                                             "infavdsdb ",
-                                            "infasatsdb "
+                                            "infasatsdb ",
+                                            "infapcrsdb ",
+                                            "infatdmdb "
                                         ]
                                     ]
                                 }
@@ -2501,8 +2560,8 @@
                             "05_AnalystServiceSetup": {
                                 "command": "sudo /home/ec2-user/Mercury_Setup/launchAnalystService.sh"
                             },
-                            "06_VDSServiceSetup": {
-                                "command": "sudo /home/ec2-user/Mercury_Setup/launchVDSService.sh"
+                            "06_PDMServiceSetup": {
+                                "command": "sudo /home/ec2-user/Mercury_Setup/launchPDMService.sh"
                             },
                             "07_SATSServiceSetup": {
                                 "command": "sudo /home/ec2-user/Mercury_Setup/launchSATSService.sh"
