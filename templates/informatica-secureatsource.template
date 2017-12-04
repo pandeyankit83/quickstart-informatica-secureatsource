@@ -2461,8 +2461,8 @@
                                             "sudo sleep 1m; \n",
                                             "sudo /opt/informatica/isp/bin/infacmd.sh enableservice -dn Domain -un $administratorName -pd $administratorPassword -sdn Native  -sn _AdminConsole; \n",
                                             "sudo sleep 30; \n",
-                                            "sudo /opt/informatica/isp/bin/infacmd.sh sats createService -dn Domain -nn Node -un $administratorName -pd $administratorPassword -sn 
-                                            SecureAtSource_Service -dt SQLSERVER -du ",
+                                            "sudo /opt/informatica/isp/bin/infacmd.sh sats createService -dn Domain -nn Node -un $administratorName -pd $administratorPassword -sn ",
+                                            "SecureAtSource_Service -dt SQLSERVER -du ",
                                             {
                                                 "Ref": "DBUser"
                                             },
@@ -2483,7 +2483,7 @@
                                             "COUNTER=0 \n",
                                             "while [[ $RET -ne 0 && $COUNTER -lt 3 ]]; do echo \"Running create contents\"; ((++COUNTER)); sudo /opt/informatica/isp/bin/infacmd.sh sats createContents -dn Domain -sdn Native -un $administratorName -pd $administratorPassword -sn SecureAtSource_Service; RET=$?;sleep 100; done \n",
                                             "sudo /opt/informatica/isp/bin/infacmd.sh sats updateServiceOptions -dn Domain -un $administratorName -pd $administratorPassword -sn SecureAtSource_Service -opts EnableUserActivity='true' \n",
-                                            sudo /opt/informatica/isp/bin/infacmd.sh enableService -dn Domain -sdn Native -un $administratorName -pd $administratorPassword -sn SecureAtSource_Service
+                                            "sudo /opt/informatica/isp/bin/infacmd.sh enableService -dn Domain -sdn Native -un $administratorName -pd $administratorPassword -sn SecureAtSource_Service \n"
                                         ]
                                     ]
                                 },
