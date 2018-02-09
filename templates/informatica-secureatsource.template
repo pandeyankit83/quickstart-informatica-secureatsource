@@ -213,51 +213,51 @@
                 "INFASATSCLUSTERHVM": "Informatica EIC & SecureAtSource Cluster Image"
             },
             "ap-northeast-1": {
-                "INFASATSADMINHVM": "ami-67bd1101",
+                "INFASATSADMINHVM": "ami-6ad1590c",
                 "INFASATSCLUSTERHVM": "ami-47be1221"
             },
             "ap-northeast-2": {
-                "INFASATSADMINHVM": "ami-c7a400a9",
+                "INFASATSADMINHVM": "ami-c5de7fab",
                 "INFASATSCLUSTERHVM": "ami-10a5017e"
             },
             "ap-south-1": {
-                "INFASATSADMINHVM": "ami-8ec98be1",
+                "INFASATSADMINHVM": "ami-02450f6d",
                 "INFASATSCLUSTERHVM": "ami-2fa8ea40"
             },
             "ap-southeast-1": {
-                "INFASATSADMINHVM": "ami-cd8ac6ae",
+                "INFASATSADMINHVM": "ami-32afc14e",
                 "INFASATSCLUSTERHVM": "ami-2588c446"
             },
             "ap-southeast-2": {
-                "INFASATSADMINHVM": "ami-d06789b2",
+                "INFASATSADMINHVM": "ami-daa454b8",
                 "INFASATSCLUSTERHVM": "ami-32668850"
             },
             "eu-central-1": {
-                "INFASATSADMINHVM": "ami-fb2aae94",
+                "INFASATSADMINHVM": "ami-e7039788",
                 "INFASATSCLUSTERHVM": "ami-5e35b131"
             },
             "eu-west-1": {
-                "INFASATSADMINHVM": "ami-ddf85ea4",
+                "INFASATSADMINHVM": "ami-20ed6159",
                 "INFASATSCLUSTERHVM": "ami-eef95f97"
             },
             "sa-east-1": {
-                "INFASATSADMINHVM": "ami-da057eb6",
+                "INFASATSADMINHVM": "ami-29f2b345",
                 "INFASATSCLUSTERHVM": "ami-6c057e00"
             },
             "us-east-1": {
-                "INFASATSADMINHVM": "ami-5cdb7126",
+                "INFASATSADMINHVM": "ami-7b8ecb01",
                 "INFASATSCLUSTERHVM": "ami-2dde7457"
             },
             "us-east-2": {
-                "INFASATSADMINHVM": "ami-ec1c3389",
+                "INFASATSADMINHVM": "ami-c9af87ac",
                 "INFASATSCLUSTERHVM": "ami-8b1e31ee"
             },
             "us-west-1": {
-                "INFASATSADMINHVM": "ami-52ad9132",
+                "INFASATSADMINHVM": "ami-8f4147ef",
                 "INFASATSCLUSTERHVM": "ami-54ac9034"
             },
             "us-west-2": {
-                "INFASATSADMINHVM": "ami-b56aa1cd",
+                "INFASATSADMINHVM": "ami-e8c56990",
                 "INFASATSCLUSTERHVM": "ami-c268a3ba"
             }
         },
@@ -1435,6 +1435,14 @@
                         "IpProtocol": "tcp",
                         "FromPort": "6005",
                         "ToPort": "6005",
+                        "CidrIp": {
+                            "Ref": "IPAddressRange"
+                        }
+                    },
+					{
+                        "IpProtocol": "tcp",
+                        "FromPort": "6605",
+                        "ToPort": "6605",
                         "CidrIp": {
                             "Ref": "IPAddressRange"
                         }
